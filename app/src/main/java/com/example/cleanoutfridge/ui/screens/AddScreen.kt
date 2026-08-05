@@ -229,6 +229,7 @@ fun AddScreen(
                         onAdd(
                             FoodItem(
                                 id = UUID.randomUUID().toString(),
+                                ingredientId = 0,
                                 name = it.name,
                                 category = it.category,
                                 expiryDate = it.expiryDate,
@@ -259,6 +260,7 @@ fun AddScreen(
                         onAdd(
                             FoodItem(
                                 id = UUID.randomUUID().toString(),
+                                ingredientId = 0,
                                 name = formName,
                                 category = formCategory,
                                 expiryDate = formExpiry,
