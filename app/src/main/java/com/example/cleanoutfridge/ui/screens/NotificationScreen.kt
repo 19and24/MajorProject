@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,54 +16,41 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.cleanoutfridge.model.FoodItem
-import com.example.cleanoutfridge.model.getDays
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cleanoutfridge.data.NotificationUiState
+import com.example.cleanoutfridge.data.NotificationViewModel
+import com.example.cleanoutfridge.data.remote.dto.NotificationDto
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 private val PageBackground = Color(0xFFF7F3EC)
 private val Ink = Color(0xFF1A1410)
 private val Muted = Color(0xFF7A7060)
 private val Green = Color(0xFF18A05C)
 
-private data class NotificationEntry(
-    val id: String,
-    val title: String,
-    val message: String,
-    val daysLeft: Int,
-)
-
 @Composable
-fun NotificationScreen(items: List<FoodItem>, onBack: () -> Unit, modifier: Modifier = Modifier) {
-    val notifications = remember(items) {
-        items
-            .map { it to getDays(it.expiryDate) }
-            .filter { it.second <= 3 }
-            .sortedBy { it.second }
-            .map { (food, days) ->
-                NotificationEntry(
-                    id = food.id,
-                    title = when {
-                        days < 0 -> "유통기한 초과"
-                        days == 0 -> "오늘 유통기한 만료"
-                        else -> "유통기한 임박"
-                    },
-                    message = "${food.name}의 유통기한을 확인해주세요.",
-                    daysLeft = days,
-                )
-            }
-    }
+fun NotificationScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: NotificationViewModel = viewModel(),
+) {
+    val state = viewModel.uiState
 
     Column(modifier = modifier.fillMaxSize().background(PageBackground)) {
         Row(
@@ -77,17 +63,33 @@ fun NotificationScreen(items: List<FoodItem>, onBack: () -> Unit, modifier: Modi
             Text("알림", color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(start = 4.dp))
         }
 
-        if (notifications.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("아직 받은 알림이 없어요", color = Muted)
+        when (state) {
+            is NotificationUiState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Green)
+                }
             }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(notifications, key = { it.id }) { notification ->
-                    NotificationCard(notification)
+            is NotificationUiState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(state.message, color = Muted)
+                    }
+                }
+            }
+            is NotificationUiState.Success -> {
+                if (state.notifications.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("아직 받은 알림이 없어요", color = Muted)
+                    }
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(state.notifications, key = { it.id }) { notification ->
+                            NotificationCard(notification, onDelete = { viewModel.delete(notification.id) })
+                        }
+                    }
                 }
             }
         }
@@ -95,7 +97,7 @@ fun NotificationScreen(items: List<FoodItem>, onBack: () -> Unit, modifier: Modi
 }
 
 @Composable
-private fun NotificationCard(notification: NotificationEntry) {
+private fun NotificationCard(notification: NotificationDto, onDelete: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
@@ -107,17 +109,36 @@ private fun NotificationCard(notification: NotificationEntry) {
                 contentAlignment = Alignment.Center,
             ) { Text("🔔", fontSize = 18.sp) }
             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                Text(notification.title, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Black)
-                Text(notification.message, color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-                Text(daysText(notification.daysLeft), color = Green, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
+                Text(notification.title ?: "알림", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Black)
+                notification.content?.let {
+                    Text(it, color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                }
+                Text(
+                    notifyTimeLabel(notification.notifyTime),
+                    color = Green,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Filled.Delete, contentDescription = "삭제", tint = Muted)
             }
         }
     }
 }
 
-private fun daysText(days: Int): String = when {
-    days < 0 -> "${-days}일 지남"
-    days == 0 -> "오늘까지"
-    days == 1 -> "내일까지"
-    else -> "${days}일 남음"
+private fun notifyTimeLabel(notifyTimeIso: String): String {
+    val notifyTime = runCatching { LocalDateTime.parse(notifyTimeIso.take(19)) }.getOrNull()
+        ?: return notifyTimeIso
+    val now = LocalDateTime.now()
+    val days = Duration.between(now.toLocalDate().atStartOfDay(), notifyTime.toLocalDate().atStartOfDay()).toDays()
+    val dateLabel = notifyTime.format(DateTimeFormatter.ofPattern("M월 d일 HH:mm"))
+    val relative = when {
+        days < 0 -> "${-days}일 지남"
+        days == 0L -> "오늘"
+        days == 1L -> "내일"
+        else -> "${days}일 후"
+    }
+    return "$dateLabel · $relative"
 }

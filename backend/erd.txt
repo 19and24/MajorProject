@@ -1,0 +1,55 @@
+Table Ingredient {
+  id        int           [pk, increment]
+  name      varchar(100)  [not null, unique]
+  category  varchar(120)
+  emoji     varchar(20)
+}
+
+Table Fridge {
+  id          int       [pk, increment]
+  created_at  datetime
+  updated_at  datetime
+}
+
+Table FridgeItem {
+  id             int       [pk, increment]
+  fridge_id      int       [not null, ref: > Fridge.id]
+  ingredient_id  int       [not null, ref: > Ingredient.id]
+  quantity       decimal
+  unit           varchar(30)
+  deadline       datetime
+  starred        boolean   [default: false]
+  created_at     datetime
+  updated_at     datetime
+}
+
+Table Notification {
+  id              int           [pk, increment]
+  fridge_item_id  int           [not null, ref: > FridgeItem.id]
+  title           varchar(100)
+  content         text
+  notify_time     datetime
+  sent            boolean       [default: false]
+}
+
+Table Recipe {
+  id                int           [pk, increment]
+  title             varchar(100)  [not null] // CKG_NM
+  method            varchar(200)  // CKG_MTH_ACTO_NM
+  ingredient_acto   varchar(200)  // CKG_MTRL_ACTO_NM
+  type              varchar(200)  // CKG_KND_ACTO_NM
+  ingredient_all    varchar(400)  // CKG_MTRL_CN
+  portion           varchar(20)   // CKG_INBUN_NM
+  cooktime          varchar(20)   // CKG_TIME_NM
+}
+
+Table RecipeIngredient {
+  recipe_id       int      [not null, ref: > Recipe.id]
+  ingredient_id   int      [not null, ref: > Ingredient.id]
+  amount          varchar(50)
+  optional        boolean  [default: false]
+
+  indexes {
+    (recipe_id, ingredient_id) [pk]
+  }
+}

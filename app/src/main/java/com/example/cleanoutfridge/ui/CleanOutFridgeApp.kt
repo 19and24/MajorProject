@@ -28,14 +28,30 @@ import com.example.cleanoutfridge.ui.screens.CleanOutScreen
 import com.example.cleanoutfridge.ui.screens.FridgeScreen
 import com.example.cleanoutfridge.ui.screens.HomeScreen
 import com.example.cleanoutfridge.ui.screens.NotificationScreen
+import com.example.cleanoutfridge.ui.screens.RecipeDetailScreen
+import com.example.cleanoutfridge.ui.screens.RecipeSearchScreen
 import com.example.cleanoutfridge.ui.screens.StatsScreen
 import com.example.cleanoutfridge.ui.theme.FoodColors
+
+/** Full-screen overlays that sit above the tabbed content, pushed/popped like a tiny back stack. */
+private sealed interface Overlay {
+    data object Notifications : Overlay
+    data object RecipeSearch : Overlay
+    data class RecipeDetail(val recipeId: Int) : Overlay
+}
 
 @Composable
 fun CleanOutFridgeApp(viewModel: FoodViewModel = viewModel()) {
     var tab by remember { mutableStateOf(Tab.HOME) }
     var addFullScreen by remember { mutableStateOf(false) }
-    var showNotifications by remember { mutableStateOf(false) }
+    var overlayStack by remember { mutableStateOf(listOf<Overlay>()) }
+
+    fun push(overlay: Overlay) {
+        overlayStack = overlayStack + overlay
+    }
+    fun pop() {
+        overlayStack = overlayStack.dropLast(1)
+    }
 
     Surface(color = FoodColors.background, modifier = Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
@@ -46,9 +62,11 @@ fun CleanOutFridgeApp(viewModel: FoodViewModel = viewModel()) {
                     is FoodUiState.Success -> FoodContent(
                         items = state.items,
                         tab = tab,
-                        showNotifications = showNotifications,
-                        onNotificationsClick = { showNotifications = true },
-                        onBackFromNotifications = { showNotifications = false },
+                        overlay = overlayStack.lastOrNull(),
+                        onNotificationsClick = { push(Overlay.Notifications) },
+                        onRecipeSearchClick = { push(Overlay.RecipeSearch) },
+                        onRecipeClick = { recipeId -> push(Overlay.RecipeDetail(recipeId)) },
+                        onOverlayBack = { pop() },
                         onAdd = viewModel::addItem,
                         onDelete = viewModel::deleteItem,
                         onAddDone = { addFullScreen = false; tab = Tab.HOME },
@@ -56,7 +74,7 @@ fun CleanOutFridgeApp(viewModel: FoodViewModel = viewModel()) {
                     )
                 }
             }
-            if (!showNotifications && (tab != Tab.ADD || !addFullScreen)) {
+            if (overlayStack.isEmpty() && (tab != Tab.ADD || !addFullScreen)) {
                 BottomNav(active = tab, onNav = { tab = it })
             }
         }
@@ -67,19 +85,27 @@ fun CleanOutFridgeApp(viewModel: FoodViewModel = viewModel()) {
 private fun FoodContent(
     items: List<FoodItem>,
     tab: Tab,
-    showNotifications: Boolean,
+    overlay: Overlay?,
     onNotificationsClick: () -> Unit,
-    onBackFromNotifications: () -> Unit,
+    onRecipeSearchClick: () -> Unit,
+    onRecipeClick: (Int) -> Unit,
+    onOverlayBack: () -> Unit,
     onAdd: (FoodItem) -> Unit,
     onDelete: (String) -> Unit,
     onAddDone: () -> Unit,
     onAddFullScreenChange: (Boolean) -> Unit,
 ) {
-    if (showNotifications) {
-        NotificationScreen(items = items, onBack = onBackFromNotifications)
-    } else {
-        when (tab) {
-            Tab.HOME -> HomeScreen(items = items, onNotificationsClick = onNotificationsClick)
+    when (overlay) {
+        is Overlay.Notifications -> NotificationScreen(onBack = onOverlayBack)
+        is Overlay.RecipeSearch -> RecipeSearchScreen(onBack = onOverlayBack, onRecipeClick = onRecipeClick)
+        is Overlay.RecipeDetail -> RecipeDetailScreen(recipeId = overlay.recipeId, onBack = onOverlayBack)
+        null -> when (tab) {
+            Tab.HOME -> HomeScreen(
+                items = items,
+                onNotificationsClick = onNotificationsClick,
+                onRecipesClick = onRecipeSearchClick,
+                onRecipeClick = onRecipeClick,
+            )
             Tab.FRIDGE -> FridgeScreen(items = items, onDelete = onDelete)
             Tab.ADD -> AddScreen(
                 onAdd = onAdd,
@@ -87,7 +113,7 @@ private fun FoodContent(
                 onFullScreenChange = onAddFullScreenChange,
             )
             Tab.STATS -> StatsScreen(items = items)
-            Tab.CLEANOUT -> CleanOutScreen(items = items)
+            Tab.CLEANOUT -> CleanOutScreen()
         }
     }
 }

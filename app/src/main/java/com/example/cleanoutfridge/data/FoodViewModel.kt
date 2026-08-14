@@ -55,7 +55,7 @@ class FoodViewModel(
                 val ingredient = matches.items.firstOrNull()
                     ?: throw IllegalStateException("'${item.name}'과(와) 일치하는 표준 식재료를 찾을 수 없어요.")
 
-                fridgeItemRepository.createFridgeItem(
+                val created = fridgeItemRepository.createFridgeItem(
                     CreateFridgeItemRequest(
                         ingredientId = ingredient.id,
                         quantity = item.quantity,
@@ -63,6 +63,17 @@ class FoodViewModel(
                         deadline = item.expiryDate,
                     ),
                 )
+                // Best-effort: a missing deadline (DEADLINE_REQUIRED) or a duplicate default
+                // notification is not fatal to adding the item itself.
+                if (created.deadline != null) {
+                    runCatching {
+                        fridgeItemRepository.createDefaultNotifications(
+                            fridgeItemId = created.id,
+                            daysBefore = listOf(3, 1),
+                            notifyHour = 9,
+                        )
+                    }
+                }
                 refresh()
             } catch (e: Exception) {
                 uiState = FoodUiState.Error(e.toUserMessage())
