@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,12 +42,8 @@ import com.example.cleanoutfridge.data.remote.dto.RecipeRecommendationDto
 import com.example.cleanoutfridge.data.remote.dto.SelectableFridgeItemDto
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-
-private val PageBackground = Color(0xFFF7F3EC)
-private val Ink = Color(0xFF1A1410)
-private val Muted = Color(0xFF7A7060)
-private val Green = Color(0xFF18A05C)
-private val Orange = Color(0xFFEA580C)
+import com.example.cleanoutfridge.ui.theme.AppFonts
+import com.example.cleanoutfridge.ui.theme.FoodColors
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -59,25 +53,32 @@ fun CleanOutScreen(viewModel: CleanOutViewModel = viewModel(), modifier: Modifie
     val selectedIds = viewModel.selectedFridgeItemIds
 
     LazyColumn(
-        modifier = modifier.fillMaxSize().background(PageBackground),
-        contentPadding = PaddingValues(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 24.dp),
+        modifier = modifier.fillMaxSize().background(FoodColors.background),
+        contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 24.dp),
     ) {
         item {
             Column {
-                Text("냉털", color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Black)
-                Text("가진 재료로 만들 수 있는 요리를 추천해 드려요", color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+                Text("냉털", color = FoodColors.foreground, fontFamily = AppFonts.fraunces, fontSize = 26.sp, fontWeight = FontWeight(700))
+                Text(
+                    "가진 재료로 만들 수 있는 요리를 추천해 드려요",
+                    color = FoodColors.mutedForeground,
+                    fontFamily = AppFonts.inter,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
         }
 
         item {
             Column(modifier = Modifier.padding(top = 24.dp)) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text("재료 선택", color = Ink, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                    Text("재료 선택", color = FoodColors.foreground, fontFamily = AppFonts.fraunces, fontSize = 18.sp, fontWeight = FontWeight(700))
                     Text(
                         "  ${selectedIds.size}개 선택",
-                        color = Muted,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 1.dp),
+                        color = FoodColors.mutedForeground,
+                        fontFamily = AppFonts.mono,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
                     )
                 }
                 Spacer(12.dp)
@@ -85,15 +86,15 @@ fun CleanOutScreen(viewModel: CleanOutViewModel = viewModel(), modifier: Modifie
                 when (selectableState) {
                     is SelectableItemsState.Loading -> {
                         Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Green)
+                            CircularProgressIndicator(color = FoodColors.primary)
                         }
                     }
                     is SelectableItemsState.Error -> {
-                        Text(selectableState.message, color = Orange, fontSize = 13.sp)
+                        Text(selectableState.message, color = FoodColors.urgent, fontFamily = AppFonts.inter, fontSize = 13.sp)
                     }
                     is SelectableItemsState.Success -> {
                         if (selectableState.items.isEmpty()) {
-                            Text("냉장고에 등록된 재료가 없어요", color = Muted, fontSize = 13.sp)
+                            Text("냉장고에 등록된 재료가 없어요", color = FoodColors.mutedForeground, fontFamily = AppFonts.inter, fontSize = 13.sp)
                         } else {
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -115,20 +116,27 @@ fun CleanOutScreen(viewModel: CleanOutViewModel = viewModel(), modifier: Modifie
                 Button(
                     onClick = { viewModel.requestRecommendations() },
                     enabled = selectedIds.isNotEmpty() && recommendationState !is RecommendationState.Loading,
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Green,
-                        disabledContainerColor = Green.copy(alpha = 0.4f),
+                        containerColor = FoodColors.primary,
+                        disabledContainerColor = FoodColors.primary.copy(alpha = 0.4f),
                     ),
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) {
-                    Text("레시피 추천 받기", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black)
+                    Text("레시피 추천 받기", color = Color.White, fontFamily = AppFonts.fraunces, fontSize = 15.sp, fontWeight = FontWeight(700))
                 }
             }
         }
 
         item {
-            Text("이런 요리는 어때요?", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 24.dp))
+            Text(
+                "이런 요리는 어때요?",
+                color = FoodColors.foreground,
+                fontFamily = AppFonts.fraunces,
+                fontSize = 16.sp,
+                fontWeight = FontWeight(700),
+                modifier = Modifier.padding(top = 24.dp),
+            )
         }
 
         when (recommendationState) {
@@ -138,7 +146,7 @@ fun CleanOutScreen(viewModel: CleanOutViewModel = viewModel(), modifier: Modifie
             is RecommendationState.Loading -> {
                 item {
                     Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Green)
+                        CircularProgressIndicator(color = FoodColors.primary)
                     }
                 }
             }
@@ -167,14 +175,15 @@ private fun Spacer(height: androidx.compose.ui.unit.Dp) {
 
 @Composable
 private fun InfoCard(message: String) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp)
+            .background(FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp))
+            .padding(20.dp),
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(message, color = Muted, fontSize = 13.sp)
-        }
+        Text(message, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter, fontSize = 13.sp)
     }
 }
 
@@ -188,17 +197,17 @@ private fun IngredientChip(row: SelectableFridgeItemDto, selected: Boolean, onCl
             .clip(CircleShape)
             .background(
                 when {
-                    disabled -> Color(0xFFF3F3F1)
-                    selected -> Color(0xFFF0FDF4)
-                    else -> Color.White
+                    disabled -> FoodColors.muted
+                    selected -> FoodColors.primarySoft
+                    else -> FoodColors.card
                 },
             )
             .border(
                 1.5.dp,
                 when {
-                    disabled -> Color(0x171A1410)
-                    selected -> Green
-                    else -> Color(0x171A1410)
+                    disabled -> FoodColors.border
+                    selected -> FoodColors.primary
+                    else -> FoodColors.border
                 },
                 CircleShape,
             )
@@ -208,11 +217,12 @@ private fun IngredientChip(row: SelectableFridgeItemDto, selected: Boolean, onCl
         Text(
             label,
             color = when {
-                disabled -> Muted
-                selected -> Green
-                else -> Ink
+                disabled -> FoodColors.mutedForeground
+                selected -> FoodColors.primary
+                else -> FoodColors.foreground
             },
-            fontWeight = FontWeight.Bold,
+            fontFamily = AppFonts.inter,
+            fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
         )
     }
@@ -223,67 +233,75 @@ private fun RecipeCard(recommendation: RecipeRecommendationDto, modifier: Modifi
     val context = LocalContext.current
     val recipe = recommendation.recipe
 
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
-        modifier = modifier.fillMaxWidth(),
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp))
+            .padding(16.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(recipe.title, color = Ink, fontSize = 16.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
-                if (recommendation.expiringTargeted) {
-                    Row(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(Color(0xFFFFF7ED))
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                    ) {
-                        Text("임박재료 활용", color = Orange, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            recommendation.recommendationReason?.let {
-                Text(it, color = Muted, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 6.dp))
-            }
-
-            Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                recipe.method?.let { Text(it, color = Muted, fontSize = 12.sp) }
-                recipe.cooktime?.let { Text(it, color = Muted, fontSize = 12.sp) }
-                recipe.portion?.let { Text(it, color = Muted, fontSize = 12.sp) }
-            }
-
-            if (recommendation.ingredients.isNotEmpty()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                recipe.title,
+                color = FoodColors.foreground,
+                fontFamily = AppFonts.fraunces,
+                fontSize = 16.sp,
+                fontWeight = FontWeight(700),
+                modifier = Modifier.weight(1f),
+            )
+            if (recommendation.expiringTargeted) {
                 Row(
-                    modifier = Modifier.padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(FoodColors.urgentSoft)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
                 ) {
-                    recommendation.ingredients.take(5).forEach { ingredient ->
-                        val (bg, fg) = when (ingredient.ownershipStatus) {
-                            OwnershipStatus.AVAILABLE -> Color(0xFFF0FDF4) to Green
-                            OwnershipStatus.EXPIRING -> Color(0xFFFFF7ED) to Orange
-                            OwnershipStatus.MISSING -> Color(0xFFF3F3F1) to Muted
-                        }
-                        Row(modifier = Modifier.clip(CircleShape).background(bg).padding(horizontal = 12.dp, vertical = 6.dp)) {
-                            Text(ingredient.name, color = fg, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
+                    Text("임박재료 활용", color = FoodColors.urgent, fontFamily = AppFonts.inter, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        recommendation.recommendationReason?.let {
+            Text(it, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 6.dp))
+        }
+
+        Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            recipe.method?.let { Text(it, color = FoodColors.mutedForeground, fontFamily = AppFonts.mono, fontSize = 11.sp) }
+            recipe.cooktime?.let { Text(it, color = FoodColors.mutedForeground, fontFamily = AppFonts.mono, fontSize = 11.sp) }
+            recipe.portion?.let { Text(it, color = FoodColors.mutedForeground, fontFamily = AppFonts.mono, fontSize = 11.sp) }
+        }
+
+        if (recommendation.ingredients.isNotEmpty()) {
+            Row(
+                modifier = Modifier.padding(top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                recommendation.ingredients.take(5).forEach { ingredient ->
+                    val (bg, fg) = when (ingredient.ownershipStatus) {
+                        OwnershipStatus.AVAILABLE -> FoodColors.primarySoft to FoodColors.primary
+                        OwnershipStatus.EXPIRING -> FoodColors.urgentSoft to FoodColors.urgent
+                        OwnershipStatus.MISSING -> FoodColors.muted to FoodColors.mutedForeground
+                    }
+                    Row(modifier = Modifier.clip(CircleShape).background(bg).padding(horizontal = 12.dp, vertical = 6.dp)) {
+                        Text(ingredient.name, color = fg, fontFamily = AppFonts.inter, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
+        }
 
-            recommendation.externalSearch?.let { external ->
-                Text(
-                    "만개의레시피에서 보기 ↗",
-                    color = Green,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .padding(top = 14.dp)
-                        .clickable {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(external.url)))
-                        },
-                )
-            }
+        recommendation.externalSearch?.let { external ->
+            Text(
+                "만개의레시피에서 보기 ↗",
+                color = FoodColors.primary,
+                fontFamily = AppFonts.inter,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(top = 14.dp)
+                    .clickable {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(external.url)))
+                    },
+            )
         }
     }
 }

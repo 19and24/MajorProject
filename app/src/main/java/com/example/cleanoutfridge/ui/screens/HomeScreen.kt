@@ -42,17 +42,12 @@ import com.example.cleanoutfridge.data.remote.dto.DashboardRecommendedRecipeDto
 import com.example.cleanoutfridge.model.FoodItem
 import com.example.cleanoutfridge.model.fmtDate
 import com.example.cleanoutfridge.model.getDays
+import com.example.cleanoutfridge.ui.theme.AppFonts
+import com.example.cleanoutfridge.ui.theme.FoodColors
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-private val PageBackground = Color(0xFFF7F3EC)
-private val Ink = Color(0xFF1A1410)
-private val Muted = Color(0xFF7A7060)
-private val Green = Color(0xFF18A05C)
-private val Orange = Color(0xFFEA580C)
-private val Red = Color(0xFFDC2626)
 
 @Composable
 fun HomeScreen(
@@ -73,16 +68,16 @@ fun HomeScreen(
     val upcomingNotificationCount = (dashboardState as? DashboardState.Success)?.summary?.upcomingNotificationCount ?: 0
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(PageBackground),
-        contentPadding = PaddingValues(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = Modifier.fillMaxSize().background(FoodColors.background),
+        contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
         item { Header(today, upcomingNotificationCount, onNotificationsClick) }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard("▤", items.size, "전체 식자재", Green, Color(0xFFF0FDF4), Modifier.weight(1f))
-                StatCard("!", expiringSoon.size, "임박", Orange, Color(0xFFFFF7ED), Modifier.weight(1f))
-                StatCard("×", expired.size, "만료", Red, Color(0xFFFEF2F2), Modifier.weight(1f))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatCard("전체", items.size, FoodColors.foreground, Modifier.weight(1f))
+                StatCard("임박", expiringSoon.size, FoodColors.urgent, Modifier.weight(1f))
+                StatCard("만료", expired.size, FoodColors.expired, Modifier.weight(1f))
             }
         }
 
@@ -99,14 +94,11 @@ fun HomeScreen(
         } else {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("🔥 지금 드세요", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
-                        Text("전체  ›", color = Green, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
+                    SectionHeading(title = "지금 드세요", trailing = "전체 보기", onTrailingClick = null)
                     if (urgent.isEmpty()) {
                         EmptyCard("임박한 식재료가 없어요")
                     } else {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             urgent.take(3).forEach { (food, days) ->
                                 UrgentFoodCard(food, days, Modifier.weight(1f))
                             }
@@ -119,7 +111,7 @@ fun HomeScreen(
                 item { ExpiredWarning(expired.first().first, expired.size) }
             }
 
-            item { Text("📅 이번 주 만료 예정", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.Black) }
+            item { SectionHeading(title = "이번 주 만료 예정", trailing = null, onTrailingClick = null) }
             if (thisWeek.isEmpty()) {
                 item { EmptyCard("이번 주 만료 예정인 식재료가 없어요") }
             } else {
@@ -134,45 +126,73 @@ fun HomeScreen(
 }
 
 @Composable
+private fun SectionHeading(title: String, trailing: String?, onTrailingClick: (() -> Unit)?) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.width(3.dp).height(14.dp).background(FoodColors.primary))
+        Text(
+            title,
+            color = FoodColors.foreground,
+            fontFamily = AppFonts.fraunces,
+            fontSize = 17.sp,
+            fontWeight = FontWeight(700),
+            modifier = Modifier.padding(start = 8.dp).weight(1f),
+        )
+        if (trailing != null) {
+            Text(
+                trailing,
+                color = FoodColors.primary,
+                fontFamily = AppFonts.inter,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.let { if (onTrailingClick != null) it.clickable { onTrailingClick() } else it },
+            )
+        }
+    }
+}
+
+@Composable
 private fun Header(today: LocalDate, upcomingNotificationCount: Int, onNotificationsClick: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = today.format(DateTimeFormatter.ofPattern("M월 d일", Locale.KOREAN)),
-                color = Muted,
-                fontSize = 12.sp,
+                text = today.format(DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)).uppercase(),
+                color = FoodColors.mutedForeground,
+                fontFamily = AppFonts.mono,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
-                letterSpacing = 1.2.sp,
+                letterSpacing = 1.4.sp,
             )
             Text(
-                text = "${greeting()} 👋",
-                color = Ink,
-                fontSize = 24.sp,
+                text = greeting(),
+                color = FoodColors.foreground,
+                fontFamily = AppFonts.fraunces,
+                fontSize = 26.sp,
                 lineHeight = 32.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.padding(top = 2.dp),
+                fontWeight = FontWeight(700),
+                modifier = Modifier.padding(top = 3.dp),
             )
         }
         Box {
             IconButton(
                 onClick = onNotificationsClick,
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(Color.White, RoundedCornerShape(16.dp))
-                    .border(1.dp, Color(0x171A1410), RoundedCornerShape(16.dp)),
-            ) { Text("🔔", fontSize = 18.sp) }
+                    .size(42.dp)
+                    .background(FoodColors.card, RoundedCornerShape(13.dp))
+                    .border(1.dp, FoodColors.border, RoundedCornerShape(13.dp)),
+            ) { Text("🔔", fontSize = 17.sp) }
             if (upcomingNotificationCount > 0) {
                 Surface(
-                    color = Red,
+                    color = FoodColors.urgent,
                     shape = CircleShape,
-                    modifier = Modifier.align(Alignment.TopEnd).size(18.dp),
+                    modifier = Modifier.align(Alignment.TopEnd).size(18.dp).border(2.dp, FoodColors.background, CircleShape),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
                             if (upcomingNotificationCount > 9) "9+" else "$upcomingNotificationCount",
                             color = Color.White,
+                            fontFamily = AppFonts.mono,
                             fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 }
@@ -188,23 +208,14 @@ private fun RecommendedRecipesSection(
     onRecipeClick: (Int) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("🍳 오늘의 추천 레시피", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
-            Text(
-                "레시피 검색  ›",
-                color = Green,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { onRecipesClick() },
-            )
-        }
+        SectionHeading(title = "오늘의 추천 레시피", trailing = "레시피 검색 ›", onTrailingClick = onRecipesClick)
 
         val recipes = (state as? DashboardState.Success)?.summary?.recommendedRecipes.orEmpty()
         when {
             state is DashboardState.Loading -> EmptyCard("추천 레시피를 불러오는 중이에요")
             recipes.isEmpty() -> EmptyCard("추천할 레시피가 아직 없어요")
             else -> {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(recipes, key = { it.id }) { recipe ->
                         RecommendedRecipeCard(recipe, onClick = { onRecipeClick(recipe.id) })
                     }
@@ -217,21 +228,28 @@ private fun RecommendedRecipesSection(
 @Composable
 private fun RecommendedRecipeCard(recipe: DashboardRecommendedRecipeDto, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.width(160.dp).height(96.dp).clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
-        border = BorderStroke(1.5.dp, Color(0xFFBBF7D0)),
+        modifier = Modifier.width(162.dp).height(98.dp).clickable { onClick() },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = FoodColors.primarySoft),
+        border = BorderStroke(1.dp, FoodColors.primarySoftBorder),
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Text(
                 recipe.title,
-                color = Ink,
+                color = FoodColors.foreground,
+                fontFamily = AppFonts.fraunces,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight(700),
                 maxLines = 2,
             )
             recipe.score?.let {
-                Text("매칭도 ${(it * 100).toInt()}%", color = Green, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "매칭도 ${(it * 100).toInt()}%",
+                    color = FoodColors.primary,
+                    fontFamily = AppFonts.mono,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
@@ -239,145 +257,154 @@ private fun RecommendedRecipeCard(recipe: DashboardRecommendedRecipeDto, onClick
 
 @Composable
 private fun StatCard(
-    icon: String,
-    count: Int,
     label: String,
+    count: Int,
     accent: Color,
-    background: Color,
     modifier: Modifier,
 ) {
-    Card(
-        modifier = modifier.height(129.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = background),
-        border = BorderStroke(1.5.dp, accent.copy(alpha = .13f)),
+    Column(
+        modifier = modifier
+            .height(88.dp)
+            .background(FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Box(
-                modifier = Modifier.size(32.dp).background(accent.copy(alpha = .13f), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) { Text(icon, color = accent, fontWeight = FontWeight.Black) }
+        Box(modifier = Modifier.width(18.dp).height(3.dp).background(accent))
+        Column {
             Text(
                 text = count.toString(),
                 color = accent,
+                fontFamily = AppFonts.mono,
                 fontSize = 24.sp,
-                lineHeight = 32.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.padding(top = 10.dp),
+                lineHeight = 26.sp,
+                fontWeight = FontWeight.Bold,
             )
-            Text(label, color = Muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(label, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
 
 @Composable
 private fun UrgentFoodCard(food: FoodItem, days: Int, modifier: Modifier) {
-    Card(
-        modifier = modifier.height(114.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
-        border = BorderStroke(1.dp, Color(0xFFFED7AA)),
+    Column(
+        modifier = modifier
+            .height(122.dp)
+            .background(FoodColors.urgentSoft, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.urgentSoftBorder, RoundedCornerShape(14.dp))
+            .padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(5.dp),
-        ) {
-            Text(food.emoji, fontSize = 28.sp)
-            Text(
-                food.name,
-                color = Ink,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Black,
-                maxLines = 1,
-                textAlign = TextAlign.Center,
-            )
-            Surface(color = Color(0xFFF97316), shape = CircleShape) {
-                Text(
-                    daysLabel(days),
-                    color = Color.White,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                )
-            }
-        }
+        Text(food.emoji, fontSize = 26.sp)
+        Text(
+            food.name,
+            color = FoodColors.foreground,
+            fontFamily = AppFonts.inter,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+        )
+        DayStamp(days = days, color = FoodColors.urgent)
+    }
+}
+
+/** The signature "produce stamp": mono digits inside a hairline-bordered tag, like a crate label. */
+@Composable
+private fun DayStamp(days: Int, color: Color) {
+    Box(
+        modifier = Modifier
+            .background(Color.White, RoundedCornerShape(5.dp))
+            .border(1.dp, color, RoundedCornerShape(5.dp))
+            .padding(horizontal = 7.dp, vertical = 2.dp),
+    ) {
+        Text(
+            daysLabel(days),
+            color = color,
+            fontFamily = AppFonts.mono,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
 @Composable
 private fun ExpiredWarning(food: FoodItem, count: Int) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
-        border = BorderStroke(1.5.dp, Color(0xFFFECACA)),
-        shape = RoundedCornerShape(16.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(FoodColors.expiredSoft, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.expiredSoftBorder, RoundedCornerShape(14.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.Top) {
-            Text("!", color = Red, fontWeight = FontWeight.Black, fontSize = 18.sp)
-            Column(modifier = Modifier.padding(start = 12.dp)) {
-                Text("유통기한 초과", color = Color(0xFFC10007), fontSize = 14.sp, fontWeight = FontWeight.Black)
-                Text(
-                    "${food.name}을(를) 확인하세요.${if (count > 1) " 외 ${count - 1}개" else ""}",
-                    color = Color(0xFFE7000B),
-                    fontSize = 12.sp,
-                )
-            }
+        Text("!", color = FoodColors.expired, fontFamily = AppFonts.fraunces, fontWeight = FontWeight(900), fontSize = 18.sp)
+        Column(modifier = Modifier.padding(start = 12.dp)) {
+            Text("유통기한 초과", color = FoodColors.expired, fontFamily = AppFonts.fraunces, fontSize = 14.sp, fontWeight = FontWeight(700))
+            Text(
+                "${food.name}을(를) 확인하세요.${if (count > 1) " 외 ${count - 1}개" else ""}",
+                color = FoodColors.expired.copy(alpha = 0.85f),
+                fontFamily = AppFonts.inter,
+                fontSize = 12.sp,
+            )
         }
     }
 }
 
 @Composable
 private fun WeekFoodRow(food: FoodItem, days: Int) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0x171A1410)),
-        shape = RoundedCornerShape(20.dp),
+    val accent = if (days <= 2) FoodColors.urgent else FoodColors.warn
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp))
+            .height(64.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(62.dp).padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(food.emoji, fontSize = 24.sp)
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(food.name, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(fmtDate(food.expiryDate), color = Color(0xFF9A9080), fontSize = 12.sp)
-            }
-            Text(
-                daysLabel(days),
-                color = if (days <= 2) Orange else Color(0xFFCA8A04),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Black,
-            )
+        Text(food.emoji, fontSize = 22.sp)
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text(food.name, color = FoodColors.foreground, fontFamily = AppFonts.inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(fmtDate(food.expiryDate), color = FoodColors.mutedForeground, fontFamily = AppFonts.mono, fontSize = 11.sp)
         }
+        DayStamp(days = days, color = accent)
     }
 }
 
 @Composable
 private fun FreshFoodCard(count: Int) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
-        border = BorderStroke(1.5.dp, Color(0xFFBBF7D0)),
-        shape = RoundedCornerShape(16.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(FoodColors.primarySoft, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.primarySoftBorder, RoundedCornerShape(14.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier.size(40.dp).background(Green.copy(alpha = .1f), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) { Text("✓", color = Green, fontWeight = FontWeight.Black) }
-            Column(modifier = Modifier.padding(start = 16.dp)) {
-                Text("신선한 식자재 ${count}개", color = Color(0xFF16A34A), fontSize = 14.sp, fontWeight = FontWeight.Black)
-                Text("8일 이상 남은 식자재예요", color = Color(0xFF4ADE80), fontSize = 12.sp)
-            }
+        Box(
+            modifier = Modifier.size(38.dp).background(FoodColors.primary.copy(alpha = .12f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { Text("✓", color = FoodColors.primary, fontWeight = FontWeight.Black) }
+        Column(modifier = Modifier.padding(start = 16.dp)) {
+            Text("신선한 식자재 ${count}개", color = FoodColors.primaryDark, fontFamily = AppFonts.fraunces, fontSize = 14.sp, fontWeight = FontWeight(700))
+            Text("8일 이상 남은 식자재예요", color = FoodColors.primary, fontFamily = AppFonts.inter, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
 private fun EmptyCard(message: String) {
-    Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
-        Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-            Text(message, color = Muted)
-        }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(96.dp)
+            .background(FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(message, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter, fontSize = 13.sp)
     }
 }
 

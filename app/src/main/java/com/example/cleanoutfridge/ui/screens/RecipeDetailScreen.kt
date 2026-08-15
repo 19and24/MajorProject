@@ -3,6 +3,7 @@ package com.example.cleanoutfridge.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,8 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +28,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,11 +36,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cleanoutfridge.data.RecipeDetailState
 import com.example.cleanoutfridge.data.RecipeDetailViewModel
 import com.example.cleanoutfridge.data.remote.dto.RecipeIngredientDto
-
-private val PageBackground = Color(0xFFF7F3EC)
-private val Ink = Color(0xFF1A1410)
-private val Muted = Color(0xFF7A7060)
-private val Green = Color(0xFF18A05C)
+import com.example.cleanoutfridge.ui.theme.AppFonts
+import com.example.cleanoutfridge.ui.theme.FoodColors
 
 @Composable
 fun RecipeDetailScreen(
@@ -55,26 +50,33 @@ fun RecipeDetailScreen(
     LaunchedEffect(recipeId) { viewModel.load(recipeId) }
     val state = viewModel.state
 
-    Column(modifier = modifier.fillMaxSize().background(PageBackground)) {
+    Column(modifier = modifier.fillMaxSize().background(FoodColors.background)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 20.dp, top = 20.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로", tint = Ink)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로", tint = FoodColors.foreground)
             }
-            Text("레시피", color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(start = 4.dp))
+            Text(
+                "레시피",
+                color = FoodColors.foreground,
+                fontFamily = AppFonts.fraunces,
+                fontSize = 20.sp,
+                fontWeight = FontWeight(700),
+                modifier = Modifier.padding(start = 4.dp),
+            )
         }
 
         when (state) {
             is RecipeDetailState.Loading -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Green)
+                    CircularProgressIndicator(color = FoodColors.primary)
                 }
             }
             is RecipeDetailState.Error -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(state.message, color = Muted)
+                    Text(state.message, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter)
                 }
             }
             is RecipeDetailState.Success -> {
@@ -85,7 +87,7 @@ fun RecipeDetailScreen(
                 ) {
                     item {
                         Column {
-                            Text(recipe.title, color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                            Text(recipe.title, color = FoodColors.foreground, fontFamily = AppFonts.fraunces, fontSize = 22.sp, fontWeight = FontWeight(700))
                             Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 recipe.method?.let { InfoTag(it) }
                                 recipe.cooktime?.let { InfoTag(it) }
@@ -96,19 +98,20 @@ fun RecipeDetailScreen(
 
                     if (recipe.ingredients.isNotEmpty()) {
                         item {
-                            Text("재료", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                            Text("재료", color = FoodColors.foreground, fontFamily = AppFonts.fraunces, fontSize = 16.sp, fontWeight = FontWeight(700))
                         }
                         items(recipe.ingredients, key = { it.ingredient.id }) { ingredient ->
                             IngredientRow(ingredient)
                         }
                     } else if (!recipe.ingredientAll.isNullOrBlank()) {
                         item {
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier.fillMaxWidth(),
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(FoodColors.card, RoundedCornerShape(14.dp))
+                                    .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp)),
                             ) {
-                                Text(recipe.ingredientAll, color = Muted, fontSize = 13.sp, modifier = Modifier.padding(16.dp))
+                                Text(recipe.ingredientAll, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter, fontSize = 13.sp, modifier = Modifier.padding(16.dp))
                             }
                         }
                     }
@@ -116,7 +119,8 @@ fun RecipeDetailScreen(
                     item {
                         Text(
                             "만개의레시피에서 보기 ↗",
-                            color = Green,
+                            color = FoodColors.primary,
+                            fontFamily = AppFonts.inter,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
@@ -138,33 +142,32 @@ fun RecipeDetailScreen(
 private fun InfoTag(text: String) {
     Row(
         modifier = Modifier
-            .background(Color(0xFFF0FDF4), CircleShape)
+            .background(FoodColors.primarySoft, CircleShape)
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
-        Text(text, color = Green, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(text, color = FoodColors.primary, fontFamily = AppFonts.mono, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
 private fun IngredientRow(ingredient: RecipeIngredientDto) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth(),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(FoodColors.card, RoundedCornerShape(12.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                (ingredient.ingredient.emoji?.let { "$it " } ?: "") + ingredient.ingredient.name,
-                color = Ink,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            ingredient.amount?.let {
-                Text(it, color = Muted, fontSize = 13.sp)
-            }
+        Text(
+            (ingredient.ingredient.emoji?.let { "$it " } ?: "") + ingredient.ingredient.name,
+            color = FoodColors.foreground,
+            fontFamily = AppFonts.inter,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        ingredient.amount?.let {
+            Text(it, color = FoodColors.mutedForeground, fontFamily = AppFonts.mono, fontSize = 12.sp)
         }
     }
 }

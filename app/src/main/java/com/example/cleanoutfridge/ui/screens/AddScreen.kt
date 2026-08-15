@@ -284,13 +284,13 @@ private fun ViewfinderPhase(onClose: () -> Unit, onShutter: () -> Unit) {
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color(0xFF0D1F0D), Color(0xFF071507), Color(0xFF0F0F1A)))),
+                .background(Brush.verticalGradient(listOf(Color(0xFF15200F), Color(0xFF0D140A), Color(0xFF120E08)))),
         ) {
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(width = 260.dp, height = 180.dp)
-                    .border(3.dp, Color(0xFF4ADE80), RoundedCornerShape(4.dp)),
+                    .border(2.dp, Color(0xFFA8D48A), RoundedCornerShape(4.dp)),
             )
             Row(
                 modifier = Modifier
@@ -318,8 +318,8 @@ private fun ViewfinderPhase(onClose: () -> Unit, onShutter: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFEF4444)))
-                    Text("AI 인식", fontFamily = AppFonts.dmMono, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(FoodColors.urgent))
+                    Text("AI 인식", fontFamily = AppFonts.mono, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
                 }
                 Spacer(Modifier.size(44.dp))
             }
@@ -332,13 +332,13 @@ private fun ViewfinderPhase(onClose: () -> Unit, onShutter: () -> Unit) {
             ) {
                 Text(
                     "식재료가 모두 보이도록 찍어주세요",
-                    fontFamily = AppFonts.nunito, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                    fontFamily = AppFonts.fraunces, fontWeight = FontWeight(700), fontSize = 17.sp,
                     color = Color.White, textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     "냉장고 안 · 장바구니 · 식탁 위 모두 OK",
-                    fontFamily = AppFonts.dmSans, fontSize = 12.sp,
+                    fontFamily = AppFonts.inter, fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.Center,
                 )
             }
@@ -386,7 +386,7 @@ private fun ViewfinderPhase(onClose: () -> Unit, onShutter: () -> Unit) {
 
 @Composable
 private fun AnalyzingPhase(step: Int, messages: List<String>) {
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF060F06)), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0E1309)), contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier.padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -406,11 +406,11 @@ private fun AnalyzingPhase(step: Int, messages: List<String>) {
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("AI 분석 중", fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 24.sp, color = Color.White)
+                Text("AI 분석 중", fontFamily = AppFonts.fraunces, fontWeight = FontWeight(900), fontSize = 24.sp, color = Color.White)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     messages[step.coerceIn(0, messages.lastIndex)],
-                    fontFamily = AppFonts.dmMono, fontSize = 14.sp, color = Color(0xFF4ADE80),
+                    fontFamily = AppFonts.mono, fontSize = 14.sp, color = Color(0xFFA8D48A),
                 )
             }
 
@@ -448,11 +448,11 @@ private fun AnalyzingPhase(step: Int, messages: List<String>) {
                             ) {
                                 when {
                                     i < step -> Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                                    i == step -> Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF4ADE80)))
+                                    i == step -> Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFA8D48A)))
                                 }
                             }
                             Text(
-                                msg, fontFamily = AppFonts.dmSans, fontSize = 14.sp,
+                                msg, fontFamily = AppFonts.inter, fontSize = 14.sp,
                                 color = if (i <= step) Color.White.copy(alpha = 0.9f) else Color.White.copy(alpha = 0.25f),
                             )
                         }
@@ -530,7 +530,7 @@ private fun ResultsPhase(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFF0FDF4))
+                        .background(FoodColors.primarySoft)
                         .border(2.dp, FoodColors.primary.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
                         .clickable { onAddManual() }
                         .padding(vertical = 16.dp),
@@ -580,7 +580,7 @@ private fun ResultsPhase(
                 enabled = selectedCount > 0 && !bulkSuccess,
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (bulkSuccess) Color(0xFF16A34A) else FoodColors.primary,
+                    containerColor = if (bulkSuccess) FoodColors.primaryDark else FoodColors.primary,
                     disabledContainerColor = FoodColors.primary.copy(alpha = 0.4f),
                 ),
                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -649,14 +649,14 @@ private fun DetectedItemRow(
                     )
                     if (item.confidence >= 0) {
                         val confColor = when {
-                            item.confidence >= 92 -> Color(0xFF16A34A)
-                            item.confidence >= 85 -> Color(0xFFCA8A04)
-                            else -> Color(0xFFEA580C)
+                            item.confidence >= 92 -> FoodColors.primaryDark
+                            item.confidence >= 85 -> FoodColors.warn
+                            else -> FoodColors.urgent
                         }
                         val confBg = when {
-                            item.confidence >= 92 -> Color(0xFFF0FDF4)
-                            item.confidence >= 85 -> Color(0xFFFEFCE8)
-                            else -> Color(0xFFFFF7ED)
+                            item.confidence >= 92 -> FoodColors.primarySoft
+                            item.confidence >= 85 -> FoodColors.warnSoft
+                            else -> FoodColors.urgentSoft
                         }
                         Box(modifier = Modifier.clip(CircleShape).background(confBg).padding(horizontal = 6.dp, vertical = 2.dp)) {
                             Text("인식률 ${item.confidence}%", fontFamily = AppFonts.dmMono, fontSize = 9.sp, fontWeight = FontWeight.Black, color = confColor)
@@ -689,11 +689,11 @@ private fun DetectedItemRow(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFFEF2F2))
+                    .background(FoodColors.expiredSoft)
                     .clickable { onDelete(item.id) },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.DeleteOutline, contentDescription = "삭제", tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.DeleteOutline, contentDescription = "삭제", tint = FoodColors.expired, modifier = Modifier.size(16.dp))
             }
         }
 
@@ -749,7 +749,7 @@ private fun IdlePhase(
                     .padding(horizontal = 20.dp)
                     .padding(top = 48.dp, bottom = 16.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFF0A1E0A), Color(0xFF0F2A0F), Color(0xFF111827))))
+                    .background(Brush.linearGradient(listOf(Color(0xFF16210F), Color(0xFF1B2913), Color(0xFF1A1608))))
                     .clickable { onCameraClick() },
             ) {
                 Row(
@@ -783,7 +783,7 @@ private fun IdlePhase(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(icon, fontSize = 11.sp)
-                            Text(label, fontFamily = AppFonts.dmMono, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4ADE80))
+                            Text(label, fontFamily = AppFonts.dmMono, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFFA8D48A))
                         }
                     }
                 }
@@ -844,7 +844,7 @@ private fun IdlePhase(
                     enabled = formName.isNotBlank() && !manualSuccess,
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (manualSuccess) Color(0xFF16A34A) else FoodColors.primary,
+                        containerColor = if (manualSuccess) FoodColors.primaryDark else FoodColors.primary,
                         disabledContainerColor = FoodColors.primary.copy(alpha = 0.4f),
                     ),
                     modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -875,7 +875,7 @@ private fun CategoryGrid(selectedId: String, onSelect: (String) -> Unit) {
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (selected) Color(0xFFF0FDF4) else FoodColors.muted)
+                            .background(if (selected) FoodColors.primarySoft else FoodColors.muted)
                             .border(2.dp, if (selected) FoodColors.primary else Color.Transparent, RoundedCornerShape(16.dp))
                             .clickable { onSelect(cat.id) }
                             .padding(vertical = 8.dp),

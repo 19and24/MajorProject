@@ -1,6 +1,7 @@
 package com.example.cleanoutfridge.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,8 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
@@ -27,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,14 +33,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cleanoutfridge.data.NotificationUiState
 import com.example.cleanoutfridge.data.NotificationViewModel
 import com.example.cleanoutfridge.data.remote.dto.NotificationDto
+import com.example.cleanoutfridge.ui.theme.AppFonts
+import com.example.cleanoutfridge.ui.theme.FoodColors
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-private val PageBackground = Color(0xFFF7F3EC)
-private val Ink = Color(0xFF1A1410)
-private val Muted = Color(0xFF7A7060)
-private val Green = Color(0xFF18A05C)
 
 @Composable
 fun NotificationScreen(
@@ -52,34 +47,41 @@ fun NotificationScreen(
 ) {
     val state = viewModel.uiState
 
-    Column(modifier = modifier.fillMaxSize().background(PageBackground)) {
+    Column(modifier = modifier.fillMaxSize().background(FoodColors.background)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 20.dp, top = 20.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로", tint = Ink)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로", tint = FoodColors.foreground)
             }
-            Text("알림", color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(start = 4.dp))
+            Text(
+                "알림",
+                color = FoodColors.foreground,
+                fontFamily = AppFonts.fraunces,
+                fontSize = 20.sp,
+                fontWeight = FontWeight(700),
+                modifier = Modifier.padding(start = 4.dp),
+            )
         }
 
         when (state) {
             is NotificationUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Green)
+                    CircularProgressIndicator(color = FoodColors.primary)
                 }
             }
             is NotificationUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.message, color = Muted)
+                        Text(state.message, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter)
                     }
                 }
             }
             is NotificationUiState.Success -> {
                 if (state.notifications.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("아직 받은 알림이 없어요", color = Muted)
+                        Text("아직 받은 알림이 없어요", color = FoodColors.mutedForeground, fontFamily = AppFonts.inter)
                     }
                 } else {
                     LazyColumn(
@@ -98,32 +100,40 @@ fun NotificationScreen(
 
 @Composable
 private fun NotificationCard(notification: NotificationDto, onDelete: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth(),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
-            Box(
-                modifier = Modifier.size(40.dp).background(Green.copy(alpha = .1f), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) { Text("🔔", fontSize = 18.sp) }
-            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                Text(notification.title ?: "알림", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Black)
-                notification.content?.let {
-                    Text(it, color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-                }
-                Text(
-                    notifyTimeLabel(notification.notifyTime),
-                    color = Green,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
+        Box(
+            modifier = Modifier.size(40.dp).background(FoodColors.primary.copy(alpha = .1f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { Text("🔔", fontSize = 18.sp) }
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(
+                notification.title ?: "알림",
+                color = FoodColors.foreground,
+                fontFamily = AppFonts.fraunces,
+                fontSize = 14.sp,
+                fontWeight = FontWeight(700),
+            )
+            notification.content?.let {
+                Text(it, color = FoodColors.mutedForeground, fontFamily = AppFonts.inter, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
             }
-            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Filled.Delete, contentDescription = "삭제", tint = Muted)
-            }
+            Text(
+                notifyTimeLabel(notification.notifyTime),
+                color = FoodColors.primary,
+                fontFamily = AppFonts.mono,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Filled.Delete, contentDescription = "삭제", tint = FoodColors.mutedForeground)
         }
     }
 }

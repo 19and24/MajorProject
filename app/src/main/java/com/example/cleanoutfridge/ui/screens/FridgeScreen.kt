@@ -1,7 +1,7 @@
 package com.example.cleanoutfridge.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -33,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,13 +38,8 @@ import com.example.cleanoutfridge.model.FoodItem
 import com.example.cleanoutfridge.model.categoryById
 import com.example.cleanoutfridge.model.fmtDate
 import com.example.cleanoutfridge.model.getDays
-
-private val PageBackground = Color(0xFFF7F3EC)
-private val Ink = Color(0xFF1A1410)
-private val Muted = Color(0xFF7A7060)
-private val Green = Color(0xFF18A05C)
-private val Orange = Color(0xFFEA580C)
-private val Red = Color(0xFFDC2626)
+import com.example.cleanoutfridge.ui.theme.AppFonts
+import com.example.cleanoutfridge.ui.theme.FoodColors
 
 @Composable
 fun FridgeScreen(
@@ -66,8 +58,8 @@ fun FridgeScreen(
     }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize().background(PageBackground),
-        contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp),
+        modifier = modifier.fillMaxSize().background(FoodColors.background),
+        contentPadding = PaddingValues(top = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
@@ -76,11 +68,11 @@ fun FridgeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("냉장고", color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                Text("냉장고", color = FoodColors.foreground, fontFamily = AppFonts.fraunces, fontSize = 26.sp, fontWeight = FontWeight(700))
                 Box(
-                    modifier = Modifier.background(Green, CircleShape).padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.background(FoodColors.primary, RoundedCornerShape(5.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
                 ) {
-                    Text("${items.size}개", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("${items.size}개", color = FoodColors.primaryForeground, fontFamily = AppFonts.mono, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -116,17 +108,21 @@ fun FridgeScreen(
 
         if (filtered.isEmpty()) {
             item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth()
+                        .height(96.dp)
+                        .background(FoodColors.card, RoundedCornerShape(14.dp))
+                        .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            if (selectedCategory == null) "냉장고가 비어있어요" else "${selectedCategory} 카테고리에 재료가 없어요",
-                            color = Muted,
-                        )
-                    }
+                    Text(
+                        if (selectedCategory == null) "냉장고가 비어있어요" else "${selectedCategory} 카테고리에 재료가 없어요",
+                        color = FoodColors.mutedForeground,
+                        fontFamily = AppFonts.inter,
+                        fontSize = 13.sp,
+                    )
                 }
             }
         } else {
@@ -150,59 +146,66 @@ private fun CategoryCard(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = if (selected) Color(0xFFF0FDF4) else Color.White),
-        border = BorderStroke(1.5.dp, if (selected) Green else Color(0x171A1410)),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.width(76.dp).clickable { onClick() },
+    Column(
+        modifier = Modifier
+            .width(76.dp)
+            .background(if (selected) FoodColors.primarySoft else FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, if (selected) FoodColors.primary else FoodColors.border, RoundedCornerShape(14.dp))
+            .clickable { onClick() }
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(emoji, fontSize = 20.sp)
-            Text(
-                label,
-                color = if (selected) Green else Ink,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-            Text("${count}개", color = if (selected) Green else Muted, fontSize = 10.sp, modifier = Modifier.padding(top = 2.dp))
-        }
+        Text(emoji, fontSize = 20.sp)
+        Text(
+            label,
+            color = if (selected) FoodColors.primary else FoodColors.foreground,
+            fontFamily = AppFonts.inter,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            modifier = Modifier.padding(top = 5.dp),
+        )
+        Text(
+            "${count}개",
+            color = if (selected) FoodColors.primary else FoodColors.mutedForeground,
+            fontFamily = AppFonts.mono,
+            fontSize = 10.sp,
+            modifier = Modifier.padding(top = 2.dp),
+        )
     }
 }
 
 @Composable
 private fun FridgeFoodRow(food: FoodItem, days: Int, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     val accent = when {
-        days < 0 -> Red
-        days <= 3 -> Orange
-        else -> Green
+        days < 0 -> FoodColors.expired
+        days <= 3 -> FoodColors.urgent
+        else -> FoodColors.primary
     }
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0x171A1410)),
-        shape = RoundedCornerShape(20.dp),
-        modifier = modifier,
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(FoodColors.card, RoundedCornerShape(14.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(14.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier.size(40.dp).background(accent.copy(alpha = .1f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center,
-            ) { Text(food.emoji, fontSize = 20.sp) }
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(food.name, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("${food.category} · ${fmtDate(food.expiryDate)}", color = Muted, fontSize = 12.sp)
-            }
-            Text(daysLabel(days), color = accent, fontSize = 12.sp, fontWeight = FontWeight.Black)
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "삭제", tint = Muted, modifier = Modifier.size(18.dp))
-            }
+        Box(
+            modifier = Modifier.size(40.dp).background(accent.copy(alpha = .1f), RoundedCornerShape(11.dp)),
+            contentAlignment = Alignment.Center,
+        ) { Text(food.emoji, fontSize = 20.sp) }
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text(food.name, color = FoodColors.foreground, fontFamily = AppFonts.inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${food.category} · ${fmtDate(food.expiryDate)}",
+                color = FoodColors.mutedForeground,
+                fontFamily = AppFonts.mono,
+                fontSize = 11.sp,
+            )
+        }
+        Text(daysLabel(days), color = accent, fontFamily = AppFonts.mono, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        IconButton(onClick = onDelete) {
+            Icon(Icons.Filled.Delete, contentDescription = "삭제", tint = FoodColors.mutedForeground, modifier = Modifier.size(18.dp))
         }
     }
 }

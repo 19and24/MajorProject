@@ -1,6 +1,7 @@
 package com.example.cleanoutfridge.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Kitchen
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,10 +45,11 @@ fun BottomNav(active: Tab, onNav: (Tab) -> Unit, modifier: Modifier = Modifier) 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xF0F7F3EC))
+            .background(FoodColors.card)
+            .border(width = 1.dp, color = FoodColors.border)
             .navigationBarsPadding()
             .padding(horizontal = 12.dp)
-            .padding(top = 8.dp, bottom = 8.dp),
+            .padding(top = 10.dp, bottom = 8.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
         NavItem(Tab.HOME, "홈", Icons.Filled.Home, active, onNav, Modifier.weight(1f))
@@ -54,14 +58,15 @@ fun BottomNav(active: Tab, onNav: (Tab) -> Unit, modifier: Modifier = Modifier) 
         Box(modifier = Modifier.width(64.dp), contentAlignment = Alignment.Center) {
             FloatingActionButton(
                 onClick = { onNav(Tab.ADD) },
-                containerColor = if (active == Tab.ADD) Color(0xFF16A34A) else FoodColors.primary,
+                containerColor = if (active == Tab.ADD) FoodColors.primaryDark else FoodColors.primary,
                 shape = CircleShape,
-                modifier = Modifier.size(56.dp),
+                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                modifier = Modifier.size(54.dp).offset(y = (-6).dp),
             ) {
                 Icon(
                     imageVector = if (active == Tab.ADD) Icons.Filled.Check else Icons.Filled.Add,
                     contentDescription = "추가",
-                    tint = Color.White,
+                    tint = FoodColors.primaryForeground,
                 )
             }
         }
@@ -80,7 +85,8 @@ private fun NavItem(
     onNav: (Tab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val color = if (active == tab) FoodColors.primary else FoodColors.mutedForeground
+    val isActive = active == tab
+    val color = if (isActive) FoodColors.primary else FoodColors.mutedForeground
     Column(
         modifier = modifier
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onNav(tab) }
@@ -88,7 +94,19 @@ private fun NavItem(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(21.dp))
-        Spacer(Modifier.height(2.dp))
-        Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = AppFonts.nunito, color = color)
+        Spacer(Modifier.height(3.dp))
+        Text(
+            label,
+            fontSize = 10.sp,
+            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+            fontFamily = AppFonts.inter,
+            color = color,
+        )
+        Spacer(Modifier.height(3.dp))
+        Box(
+            modifier = Modifier
+                .size(width = 4.dp, height = 4.dp)
+                .background(if (isActive) FoodColors.primary else Color.Transparent, CircleShape),
+        )
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -23,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -49,18 +49,18 @@ fun StatsScreen(items: List<FoodItem>, modifier: Modifier = Modifier) {
 
     val statusData = remember(items) {
         listOf(
-            Triple("신선", fresh.size, Color(0xFF22C55E)),
-            Triple("이번 주", thisWeek.size - urgent.size, Color(0xFFEAB308)),
-            Triple("임박", urgent.size, Color(0xFFF97316)),
-            Triple("만료", expired.size, Color(0xFFEF4444)),
+            Triple("신선", fresh.size, FoodColors.fresh),
+            Triple("이번 주", thisWeek.size - urgent.size, FoodColors.warn),
+            Triple("임박", urgent.size, FoodColors.urgent),
+            Triple("만료", expired.size, FoodColors.expired),
         ).filter { it.second > 0 }
     }
 
     LazyColumn(modifier = modifier.fillMaxSize()) {
         item {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 48.dp, bottom = 20.dp)) {
-                Text("소비 통계", fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 24.sp, color = FoodColors.foreground)
-                Text("총 ${items.size}개 식재료 관리 중", fontFamily = AppFonts.dmMono, fontSize = 12.sp, color = FoodColors.mutedForeground)
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 44.dp, bottom = 20.dp)) {
+                Text("소비 통계", fontFamily = AppFonts.fraunces, fontWeight = FontWeight(700), fontSize = 26.sp, color = FoodColors.foreground)
+                Text("총 ${items.size}개 식재료 관리 중", fontFamily = AppFonts.mono, fontSize = 12.sp, color = FoodColors.mutedForeground)
             }
         }
 
@@ -70,13 +70,13 @@ fun StatsScreen(items: List<FoodItem>, modifier: Modifier = Modifier) {
 
         if (statusData.isNotEmpty()) {
             item {
-                StatsCard(title = "📊 상태별 분포") {
+                StatsCard(title = "상태별 분포") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         statusData.forEach { (label, value, color) ->
                             Column {
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(label, fontFamily = AppFonts.nunito, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = FoodColors.foreground)
-                                    Text("${value}개", fontFamily = AppFonts.dmMono, fontWeight = FontWeight.Black, fontSize = 12.sp, color = color)
+                                    Text(label, fontFamily = AppFonts.inter, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = FoodColors.foreground)
+                                    Text("${value}개", fontFamily = AppFonts.mono, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = color)
                                 }
                                 Spacer(Modifier.height(4.dp))
                                 Box(
@@ -98,7 +98,7 @@ fun StatsScreen(items: List<FoodItem>, modifier: Modifier = Modifier) {
         }
 
         item {
-            StatsCard(title = "🥗 카테고리별 현황") {
+            StatsCard(title = "카테고리별 현황") {
                 if (catCounts.isNotEmpty()) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         CategoryDonut(catCounts = catCounts)
@@ -109,10 +109,10 @@ fun StatsScreen(items: List<FoodItem>, modifier: Modifier = Modifier) {
                                     Box(modifier = Modifier.size(10.dp).background(FoodColors.pieColors[i % FoodColors.pieColors.size], RoundedCornerShape(50)))
                                     Text(
                                         "${cat?.emoji ?: ""} ${entry.key}",
-                                        fontFamily = AppFonts.nunito, fontSize = 12.sp, color = FoodColors.foreground,
+                                        fontFamily = AppFonts.inter, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = FoodColors.foreground,
                                         modifier = Modifier.weight(1f),
                                     )
-                                    Text("${entry.value}", fontFamily = AppFonts.dmMono, fontWeight = FontWeight.Black, fontSize = 12.sp, color = FoodColors.mutedForeground)
+                                    Text("${entry.value}", fontFamily = AppFonts.mono, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = FoodColors.mutedForeground)
                                 }
                             }
                         }
@@ -126,16 +126,16 @@ fun StatsScreen(items: List<FoodItem>, modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 12.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFFF0FDF4), Color(0xFFDCFCE7))))
-                    .border(1.5.dp, Color(0xFFBBF7D0), RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(FoodColors.primarySoft)
+                    .border(1.dp, FoodColors.primarySoftBorder, RoundedCornerShape(16.dp))
                     .padding(16.dp),
             ) {
-                Text("💡 절약 팁", fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 14.sp, color = Color(0xFF166534))
+                Text("절약 팁", fontFamily = AppFonts.fraunces, fontWeight = FontWeight(700), fontSize = 14.sp, color = FoodColors.primaryDark)
                 Spacer(Modifier.height(4.dp))
                 val tip = "임박한 식재료 ${urgent.size}개를 먼저 소비하면 낭비를 줄일 수 있어요." +
-                    if (expired.isNotEmpty()) " 만료된 ${expired.size}개는 바로 확인해 주세요." else " 지금 상태를 잘 유지하고 있어요! 🎉"
-                Text(tip, fontFamily = AppFonts.dmSans, fontSize = 12.sp, color = Color(0xFF16A34A), lineHeight = 18.sp)
+                    if (expired.isNotEmpty()) " 만료된 ${expired.size}개는 바로 확인해 주세요." else " 지금 상태를 잘 유지하고 있어요."
+                Text(tip, fontFamily = AppFonts.inter, fontSize = 12.sp, color = FoodColors.primaryDark, lineHeight = 18.sp)
             }
         }
 
@@ -149,12 +149,12 @@ private fun StatsCard(title: String, content: @Composable () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(FoodColors.card)
-            .border(1.dp, FoodColors.border, RoundedCornerShape(20.dp))
+            .border(1.dp, FoodColors.border, RoundedCornerShape(16.dp))
             .padding(16.dp),
     ) {
-        Text(title, fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 14.sp, color = FoodColors.foreground)
+        Text(title, fontFamily = AppFonts.fraunces, fontWeight = FontWeight(700), fontSize = 14.sp, color = FoodColors.foreground)
         Spacer(Modifier.height(16.dp))
         content()
     }
@@ -163,10 +163,10 @@ private fun StatsCard(title: String, content: @Composable () -> Unit) {
 @Composable
 private fun SummaryGrid(fresh: Int, urgent: Int, expired: Int, thisWeek: Int) {
     val cards = listOf(
-        Quad("신선", fresh, Color(0xFF16A34A), Color(0xFFF0FDF4), Color(0xFFBBF7D0), "✅"),
-        Quad("만료 임박", urgent, Color(0xFFEA580C), Color(0xFFFFF7ED), Color(0xFFFED7AA), "⚠️"),
-        Quad("만료됨", expired, Color(0xFFDC2626), Color(0xFFFEF2F2), Color(0xFFFECACA), "🚫"),
-        Quad("이번 주", thisWeek, Color(0xFFCA8A04), Color(0xFFFEFCE8), Color(0xFFFEF08A), "📅"),
+        Quad("신선", fresh, FoodColors.fresh, FoodColors.freshSoft, FoodColors.freshSoftBorder),
+        Quad("만료 임박", urgent, FoodColors.urgent, FoodColors.urgentSoft, FoodColors.urgentSoftBorder),
+        Quad("만료됨", expired, FoodColors.expired, FoodColors.expiredSoft, FoodColors.expiredSoftBorder),
+        Quad("이번 주", thisWeek, FoodColors.warn, FoodColors.warnSoft, FoodColors.warnSoftBorder),
     )
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         cards.chunked(2).forEach { row ->
@@ -175,17 +175,16 @@ private fun SummaryGrid(fresh: Int, urgent: Int, expired: Int, thisWeek: Int) {
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(card.bg)
-                            .border(1.5.dp, card.ring, RoundedCornerShape(20.dp))
+                            .border(1.dp, card.ring, RoundedCornerShape(16.dp))
                             .padding(16.dp),
                     ) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(card.emoji, fontSize = 18.sp)
-                            Text("${card.count}", fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 22.sp, color = card.color)
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        Text(card.label, fontFamily = AppFonts.nunito, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = card.color)
+                        Box(modifier = Modifier.width(16.dp).height(3.dp).background(card.color))
+                        Spacer(Modifier.height(10.dp))
+                        Text("${card.count}", fontFamily = AppFonts.mono, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = card.color)
+                        Spacer(Modifier.height(4.dp))
+                        Text(card.label, fontFamily = AppFonts.inter, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = card.color)
                     }
                 }
             }
@@ -193,7 +192,7 @@ private fun SummaryGrid(fresh: Int, urgent: Int, expired: Int, thisWeek: Int) {
     }
 }
 
-private data class Quad(val label: String, val count: Int, val color: Color, val bg: Color, val ring: Color, val emoji: String)
+private data class Quad(val label: String, val count: Int, val color: Color, val bg: Color, val ring: Color)
 
 @Composable
 private fun CategoryDonut(catCounts: List<Map.Entry<String, Int>>, modifier: Modifier = Modifier) {
@@ -229,8 +228,8 @@ private fun CategoryDonut(catCounts: List<Map.Entry<String, Int>>, modifier: Mod
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("$total", fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 18.sp, color = FoodColors.foreground)
-            Text("전체", fontFamily = AppFonts.dmMono, fontSize = 9.sp, color = FoodColors.mutedForeground)
+            Text("$total", fontFamily = AppFonts.mono, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = FoodColors.foreground)
+            Text("전체", fontFamily = AppFonts.inter, fontSize = 9.sp, color = FoodColors.mutedForeground)
         }
     }
 }
