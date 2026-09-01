@@ -4,8 +4,7 @@ import app.models  # noqa: F401 - registers all models on Base.metadata for auto
 
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import create_engine, pool
 
 from alembic import context
 
@@ -42,13 +41,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.set_main_option(
-        "sqlalchemy.url",
-        settings.DATABASE_URL,
-    )
-
     context.configure(
-        url=url,
+        url=settings.database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -66,19 +60,15 @@ def run_migrations_online() -> None:
 
     """
 
-    configuration = config.get_section(config.config_ini_section)
-
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
-
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    connectable = create_engine(
+        settings.database_url,
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():
