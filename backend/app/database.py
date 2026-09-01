@@ -5,7 +5,12 @@ from app.config import settings
 
 is_sqlite = settings.DATABASE_URL.startswith("sqlite")
 connect_args = {"check_same_thread": False} if is_sqlite else {}
-engine = create_engine(settings.DATABASE_URL, connect_args=connect_args)
+engine = create_engine(
+    settings.DATABASE_URL, 
+    connect_args=connect_args,
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 
 if is_sqlite:
     @event.listens_for(engine, "connect")
