@@ -3,16 +3,18 @@ name: Backend CI
 on:
   pull_request:
     branches:
-      - main
+      - "feature/backend-integration"
     paths:
       - "backend/**"
+      - "render.yaml"
       - ".github/workflows/backend-ci.yml"
 
   push:
     branches:
-      - main
+      - "feature/backend-integration"
     paths:
       - "backend/**"
+      - "render.yaml"
       - ".github/workflows/backend-ci.yml"
 
 permissions:
