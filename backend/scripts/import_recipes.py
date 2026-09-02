@@ -4,6 +4,8 @@ Usage (from backend/ with the venv active):
     python scripts/import_recipes.py
     python scripts/import_recipes.py data/TB_RECIPE_SEARCH_251231.csv
     python scripts/import_recipes.py --dry-run
+    python scripts/import_recipes.py --test
+    python scripts/import_recipes.py --test 500 --offset 1000
     python scripts/import_recipes.py --force
 
 With no path argument, every CSV in backend/data is read. Rows are de-duplicated
@@ -70,6 +72,22 @@ def parse_args() -> argparse.Namespace:
         help="CSV 읽기와 파싱 결과만 확인하고 DB에는 쓰지 않음",
     )
     parser.add_argument(
+        "--test",
+        nargs="?",
+        type=int,
+        const=100,
+        default=None,
+        metavar="N",
+        help="테스트 적재할 레시피 개수(숫자를 생략하면 100개)",
+    )
+    parser.add_argument(
+        "--offset",
+        type=int,
+        default=0,
+        metavar="N",
+        help="--test에서 건너뛸 레시피 개수(0부터 시작, 기본값: 0)",
+    )
+    parser.add_argument(
         "--min-ingredient-frequency",
         type=int,
         default=MIN_INGREDIENT_FREQ,
@@ -79,6 +97,12 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     if args.min_ingredient_frequency < 1:
         parser.error("--min-ingredient-frequency는 1 이상이어야 합니다.")
+    if args.test is not None and args.test < 1:
+        parser.error("--test의 레시피 개수는 1 이상이어야 합니다.")
+    if args.offset < 0:
+        parser.error("--offset은 0 이상이어야 합니다.")
+    if args.offset and args.test is None:
+        parser.error("--offset은 --test와 함께 사용해야 합니다.")
     return args
 
 
@@ -152,6 +176,22 @@ def display_ingredient_text(parsed_items: list[tuple[str, str | None]]) -> str:
     )
 
 
+def select_test_rows(
+    rows: list[dict[str, str | None]],
+    test_count: int | None,
+    offset: int,
+) -> list[dict[str, str | None]]:
+    if test_count is None:
+        return rows
+
+    selected = rows[offset:offset + test_count]
+    if not selected:
+        raise SystemExit(
+            f"테스트 범위에 레시피가 없습니다: offset={offset}, count={test_count}"
+        )
+    return selected
+
+
 def main() -> None:
     args = parse_args()
     csv_paths = resolve_csv_paths(args.paths)
@@ -160,6 +200,12 @@ def main() -> None:
         print(f"  - {csv_path}")
     rows = load_rows(csv_paths)
     print(f"Loaded {len(rows)} unique recipe rows")
+    rows = select_test_rows(rows, args.test, args.offset)
+    if args.test is not None:
+        print(
+            f"Test mode: selected {len(rows)} recipes "
+            f"(offset={args.offset}, requested={args.test})"
+        )
 
     print("Building ingredient catalog ...")
     catalog = build_ingredient_catalog(rows)
