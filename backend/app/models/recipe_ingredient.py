@@ -22,6 +22,10 @@ class RecipeIngredient(Base):
         String(50),
     )
 
+    original_name: Mapped[str | None] = mapped_column(
+        String(100),
+    )
+
     optional: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

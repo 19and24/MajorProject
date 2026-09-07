@@ -73,9 +73,24 @@ class FullApiTest(unittest.TestCase):
             db.add(recipe)
             db.flush()
             db.add_all([
-                RecipeIngredient(recipe_id=recipe.id, ingredient_id=green_onion.id, amount="20g"),
-                RecipeIngredient(recipe_id=recipe.id, ingredient_id=egg.id, amount="2개"),
-                RecipeIngredient(recipe_id=recipe.id, ingredient_id=soy_sauce.id, amount="1큰술"),
+                RecipeIngredient(
+                    recipe_id=recipe.id,
+                    ingredient_id=green_onion.id,
+                    original_name="대파 흰부분",
+                    amount="20g",
+                ),
+                RecipeIngredient(
+                    recipe_id=recipe.id,
+                    ingredient_id=egg.id,
+                    original_name="계란",
+                    amount="2개",
+                ),
+                RecipeIngredient(
+                    recipe_id=recipe.id,
+                    ingredient_id=soy_sauce.id,
+                    original_name="국간장",
+                    amount="1큰술",
+                ),
             ])
 
             expiring_item = FridgeItem(
@@ -188,6 +203,12 @@ class FullApiTest(unittest.TestCase):
         self.assertEqual(detail.status_code, 200)
         names = {i["ingredient"]["name"] for i in detail.json()["data"]["ingredients"]}
         self.assertEqual(names, {"대파", "계란", "국간장"})
+        green_onion = next(
+            item
+            for item in detail.json()["data"]["ingredients"]
+            if item["ingredient"]["name"] == "대파"
+        )
+        self.assertEqual(green_onion["originalName"], "대파 흰부분")
 
         ingredients = self.client.get("/api/v1/recipes/205/ingredients")
         self.assertEqual(len(ingredients.json()["data"]), 3)
@@ -223,6 +244,8 @@ class FullApiTest(unittest.TestCase):
         self.assertEqual(ownerships["대파"], "EXPIRING")
         self.assertEqual(ownerships["계란"], "AVAILABLE")
         self.assertEqual(ownerships["국간장"], "MISSING")
+        green_onion = next(item for item in top["ingredients"] if item["name"] == "대파")
+        self.assertEqual(green_onion["originalName"], "대파 흰부분")
         self.assertIn("10000recipe.com", top["externalSearch"]["url"])
 
     def test_recommend_requires_selection(self):

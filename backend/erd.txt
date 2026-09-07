@@ -46,6 +46,7 @@ Table Recipe {
 Table RecipeIngredient {
   recipe_id       int      [not null, ref: > Recipe.id]
   ingredient_id   int      [not null, ref: > Ingredient.id]
+  original_name   varchar(100) // CSV에 기록된 원문 재료명
   amount          varchar(50)
   optional        boolean  [default: false]
 

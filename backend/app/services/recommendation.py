@@ -88,7 +88,13 @@ def score_recipe(recipe: Recipe, links, selected_by_ingredient: dict[int, Fridge
     ingredients_out = []
     available_count = 0
     expiring_used = False
-    total = len(links)
+    scoreable_links = [
+        link
+        for link in links
+        if not link.optional and link.ingredient.category != "기본재료"
+    ]
+    scoreable_ids = {link.ingredient_id for link in scoreable_links}
+    total = len(scoreable_links)
 
     for link in links:
         fridge_item = selected_by_ingredient.get(link.ingredient_id)
@@ -97,7 +103,8 @@ def score_recipe(recipe: Recipe, links, selected_by_ingredient: dict[int, Fridge
             ownership = "EXPIRING" if status == "EXPIRING" else "AVAILABLE"
             if ownership == "EXPIRING":
                 expiring_used = True
-            available_count += 1
+            if link.ingredient_id in scoreable_ids:
+                available_count += 1
             fridge_item_id = fridge_item.id
         else:
             ownership = "MISSING"
@@ -106,6 +113,7 @@ def score_recipe(recipe: Recipe, links, selected_by_ingredient: dict[int, Fridge
         ingredients_out.append({
             "ingredientId": link.ingredient_id,
             "name": link.ingredient.name,
+            "originalName": link.original_name or link.ingredient.name,
             "amount": link.amount,
             "ownershipStatus": ownership,
             "fridgeItemId": fridge_item_id,

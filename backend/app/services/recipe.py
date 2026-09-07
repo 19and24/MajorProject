@@ -29,6 +29,7 @@ def serialize_ingredient(link: RecipeIngredient) -> dict:
             "category": link.ingredient.category,
             "emoji": link.ingredient.emoji,
         },
+        "originalName": link.original_name or link.ingredient.name,
         "amount": link.amount,
         "optional": link.optional,
     }
