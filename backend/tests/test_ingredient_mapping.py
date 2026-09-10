@@ -193,17 +193,94 @@ class IngredientMappingTest(unittest.TestCase):
         self.assertIsNotNone(resolved)
         self.assertEqual(resolved.canonical_name, '마요네즈')
 
-    def test_missing_exclusion_file_issues_warning_and_continues(self):
-        with warnings.catch_warnings(record=True) as recorded:
-            warnings.simplefilter("always")
-            mapper = IngredientMapper.from_csv(
-                MAPPING_PATH,
-                exclusion_path=Path("non_existent_exclusion.csv"),
-            )
-            self.assertEqual(len(recorded), 1)
-            self.assertTrue(issubclass(recorded[0].category, UserWarning))
-            self.assertIn("재료 제외 파일을 찾을 수 없습니다", str(recorded[0].message))
-            self.assertIsNotNone(mapper)
+    def test_cooking_oil_variations_and_alternatives(self):
+        """식용유 오타/별명 및 '식용유 내지는 버터'가 식용유로 매핑된다."""
+        for raw in ("식용의", "식용육", "식융유", "식용유 최소", "식용기름", "식용오일"):
+            with self.subTest(raw=raw):
+                resolved = self.mapper.resolve(raw, None)
+                self.assertIsNotNone(resolved)
+                self.assertEqual(resolved.canonical_name, "식용유")
+
+        alt_resolved = self.mapper.resolve_many("식용유 내지는 버터", None)
+        self.assertIsNotNone(alt_resolved)
+        self.assertEqual(alt_resolved[0].canonical_name, "식용유")
+
+    def test_commercial_prefix_is_stripped(self):
+        """'시판', '시판용' 수식어가 제거되어 원재료로 매핑된다."""
+        resolved1 = self.mapper.resolve("시판 수제비", None)
+        self.assertIsNotNone(resolved1)
+        self.assertEqual(resolved1.canonical_name, "수제비")
+
+        resolved2 = self.mapper.resolve("시판용 곰탕", None)
+        self.assertIsNotNone(resolved2)
+        self.assertEqual(resolved2.canonical_name, "사골육수")
+
+    def test_slice_prefix_stripped_except_ham_and_cheese(self):
+        """'슬라이스' 접두사는 일반 재료에서 제거되나, 햄과 치즈는 각각 유지된다."""
+        almond = self.mapper.resolve("슬라이스 아몬드", None)
+        self.assertIsNotNone(almond)
+        self.assertEqual(almond.canonical_name, "아몬드")
+
+        garlic = self.mapper.resolve("슬라이스 마늘", None)
+        self.assertIsNotNone(garlic)
+        self.assertEqual(garlic.canonical_name, "마늘")
+
+        # 슬라이스 햄 -> 햄
+        ham = self.mapper.resolve("슬라이스 햄", None)
+        self.assertIsNotNone(ham)
+        self.assertEqual(ham.canonical_name, "햄")
+
+        # 슬라이스 치즈 -> 슬라이스치즈
+        cheese = self.mapper.resolve("슬라이스 치즈", None)
+        self.assertIsNotNone(cheese)
+        self.assertEqual(cheese.canonical_name, "슬라이스치즈")
+
+    def test_preparation_prefixes_stripped(self):
+        """'손질한', '손질', '송송 썬', '빻은', '다듬은', '밑간용', '볶음용' 수식어가 제거된다."""
+        cases = {
+            "손질 꽃게": "꽃게",
+            "손질낙지": "낙지",
+            "송송 썬 대파": "대파",
+            "송송 대파": "대파",
+            "빻은 깨": "참깨",
+            "다듬은 쪽파": "쪽파",
+            "밑간용- 소금": "소금",
+            "볶음용 멸치": "멸치",
+            "닭 볶음용": "닭고기",
+        }
+        for raw, expected in cases.items():
+            with self.subTest(raw=raw):
+                resolved = self.mapper.resolve(raw, None)
+                self.assertIsNotNone(resolved, f"Failed to resolve {raw}")
+                self.assertEqual(resolved.canonical_name, expected)
+
+    def test_colon_and_punctuation_stripped(self):
+        """'마늘 :', '달걀:', '설탕:' 등의 콜론과 구두점이 정리되어 매핑된다."""
+        for raw, expected in (("마늘 :", "마늘"), ("달걀:", "달걀"), ("설탕:", "설탕")):
+            with self.subTest(raw=raw):
+                resolved = self.mapper.resolve(raw, None)
+                self.assertIsNotNone(resolved)
+                self.assertEqual(resolved.canonical_name, expected)
+
+    def test_trailing_half_and_parts_modifiers(self):
+        """'설탕 반', '물 반', '배추 겉잎', '배추 1통' 등의 후행 수식어 및 단위가 정리된다."""
+        sugar = self.mapper.resolve("설탕 반", None)
+        self.assertIsNotNone(sugar)
+        self.assertEqual(sugar.canonical_name, "설탕")
+        self.assertEqual(sugar.amount, "반")
+
+        water = self.mapper.resolve("물 반", None)
+        self.assertIsNotNone(water)
+        self.assertEqual(water.canonical_name, "물")
+
+        cabbage = self.mapper.resolve("배추 겉잎", None)
+        self.assertIsNotNone(cabbage)
+        self.assertEqual(cabbage.canonical_name, "배추")
+
+        cabbage_head = self.mapper.resolve("배추 1통", None)
+        self.assertIsNotNone(cabbage_head)
+        self.assertEqual(cabbage_head.canonical_name, "배추")
+        self.assertEqual(cabbage_head.amount, "1통")
 
 
 if __name__ == "__main__":

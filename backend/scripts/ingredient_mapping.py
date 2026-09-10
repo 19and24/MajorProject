@@ -24,12 +24,13 @@ TRAILING_SIZE_PAREN_RE = re.compile(
     r"\s*\((?:조금\s*)?(?:작은|중간|큰)\s*(?:사이즈|크기|것)?\)\s*$"
 )
 PREPARATION_PREFIX_RE = re.compile(
-    r"^(?:고명용|가니쉬용|장식용|데코용|손질한|다진|간|갈은|깐|볶은|삶은|"
+    r"^(?:고명용|가니쉬용|장식용|데코용|다진|간|갈은|깐|볶은|삶은|"
     r"데친|냉동|불린|찐|구운)\s+"
 )
 AMOUNT_UNIT_PATTERN = (
-    r"kg|mg|ml|g|l|개|쪽|호|컵|큰술|작은술|꼬집|장|봉|팩|줌|스푼|"
-    r"공기|소주잔|숟가락|티스푼|캔|병|알|모|대|토막|조각|줄기|cm|t|T"
+    r"kg|mg|ml|g|l|리터|개|쪽|호|컵|큰술|작은술|꼬집|장|봉|팩|줌|스푼|"
+    r"공기|소주잔|숟가락|티스푼|캔|병|알|모|대|토막|조각|줄기|뿌리|통|"
+    r"마리|인분|줄|단|송이|포기|묶음|톨|움큼|cm|t|T"
 )
 LEADING_AMOUNT_RE = re.compile(
     r"^(?P<amount>\d+(?:[./]\d+)?\s*"
@@ -38,10 +39,11 @@ LEADING_AMOUNT_RE = re.compile(
     re.IGNORECASE,
 )
 TRAILING_AMOUNT_RE = re.compile(
-    r"^(?P<name>.+?)\s+(?P<amount>\d+(?:[./]\d+)?\s*"
-    rf"(?:{AMOUNT_UNIT_PATTERN}))$",
+    r"^(?P<name>.+?)\s+(?P<amount>\d+(?:[./~]\d*)?\s*"
+    rf"(?:{AMOUNT_UNIT_PATTERN})[\s~+=]*)$",
     re.IGNORECASE,
 )
+TRAILING_HALF_AMOUNT_RE = re.compile(r"^(?P<name>.+?)\s+(?P<amount>반)$")
 TRAILING_AMOUNT_PREPARATION_RE = re.compile(
     r"^(?P<name>.+?)(?:\s+손질)?\s+(?P<amount>\d+(?:[./]\d+)?\s*"
     rf"(?:{AMOUNT_UNIT_PATTERN}))\s*(?:손질\s*후|손질한\s*것)$",
@@ -56,17 +58,18 @@ TRAILING_SIZE_SYMBOL_RE = re.compile(
     r"^(?P<name>.+?)\s+(?:특대|대|중|소|大|中|小)$"
 )
 TRAILING_PREPARATION_RE = re.compile(
-    r"^(?P<name>.+?)\s+(?:손질\s*후|손질한\s*것|다진\s*것|썬\s*것|"
+    r"^(?P<name>.+?)\s+(?:손질\s*후|손질한\s*것|손질|다진\s*것|썬\s*것|"
     r"구워둔\s*것|갈아둔\s*것|크게|듬뿍|담뿍)$"
 )
 FALLBACK_PREFIX_RE = re.compile(
     r"^(?:가공|가는|갈은|갈아낸|갈아준|깐|깍은|볶은|삶은|데친|냉동|불린|"
-    r"찐|구운|손질한|채썬|썬|다진|건조|고운|굵은|국산|겨울|압축|자연산|"
+    r"찐|구운|손질한|손질|채썬|썬|다진|건조|고운|굵은|국산|겨울|압축|자연산|"
     r"각종|미니|꼬마|작은|생|가염|무가당|저지방|유기농|간수뺀|강한|"
     r"베이비|햇|말린|으깬|녹인|데운|따뜻한|차가운|어슷썬|잘게|곱게|"
-    r"얇게|두껍게|슬라이스한|채친|채\s*썬|토핑용|세척용|튀김용|구이용|"
-    r"국물용|육수용|김밥용|샐러드용|고명용|기호에\s*따라|취향껏|시판|"
-    r"간|crushed|저당|안매운|순한|무설탕|무가염|하프)"
+    r"얇게|두껍게|슬라이스한|슬라이스|채친|채\s*썬|토핑용|세척용|튀김용|구이용|"
+    r"국물용|육수용|김밥용|샐러드용|고명용|기호에\s*따라|취향에\s*따라|취향껏|시판용|시판|"
+    r"간|crushed|저당|안매운|순한|무설탕|무가염|하프|송송\s*썬|송송|다듬은|빻은|"
+    r"밑간용[-:\s]*|밑간[-:\s]*|볶음용|조림용|국용|찌개용|구울\s*때[-:\s]*|볶을\s*때[-:\s]*|절일\s*때[-:\s]*)"
     r"\s*(?P<name>.+)$",
     re.IGNORECASE,
 )
@@ -75,16 +78,19 @@ FALLBACK_SPACED_PREFIX_RE = re.compile(
 )
 FALLBACK_SUFFIX_RE = re.compile(
     r"^(?P<name>.+?)(?:\s*(?:가루|채|슬라이스|큐브|필렛|필레|분태|살|"
-    r"통조림|캔)|\s+한)$"
+    r"통조림|캔|겉잎|속대|잎|줄기|뿌리|껍질|초록부분|흰부분|송송|볶음용|조림용|찌개용|구이용|카레용|수육용|샤브용)|\s+한)$"
 )
 FALLBACK_PARENTHETICAL_RE = re.compile(r"^(?P<name>.+?)\s*\([^()]+\)$")
 FALLBACK_TRAILING_DIGIT_RE = re.compile(r"^(?P<name>.+?)[\s]*\d+$")
+FALLBACK_TRAILING_LETTER_RE = re.compile(r"^(?P<name>.+?)[\s]*[A-Za-z가나다라ㄱㄴㄷ]$")
 FALLBACK_TRAILING_NOISE_RE = re.compile(
     r"^(?P<name>.+?)\s+(?:약|약간|조금|적당량|넉넉히|듬뿍|담뿍|"
-    r"국그릇\s*기준|한|두|세)$"
+    r"국그릇\s*기준|한|두|세|반|깎아서|깍아서|평평하게|수북하게|수북이|취향껏|취향에\s*따라|기호껏|소량)$"
 )
 COMPOUND_DELIMITER_RE = re.compile(r"\s*(?:\+|&|·|,|，|/)\s*")
-ALTERNATIVE_RE = re.compile(r"\s+(?:또는|혹은|or)\s+", re.IGNORECASE)
+ALTERNATIVE_RE = re.compile(
+    r"(?:\s*(?:또는|혹은|내지는)\s*|\s+or\s+|\s+(?:이나|나)\s+)", re.IGNORECASE
+)
 SPLITTABLE_CANONICAL_NAMES = {
     "소금",
     "굵은소금",
@@ -335,6 +341,7 @@ def fallback_ingredient_names(candidate: str) -> list[str]:
         FALLBACK_SUFFIX_RE,
         FALLBACK_PARENTHETICAL_RE,
         FALLBACK_TRAILING_DIGIT_RE,
+        FALLBACK_TRAILING_LETTER_RE,
         FALLBACK_TRAILING_NOISE_RE,
         TRAILING_SIZE_SYMBOL_RE,
     )
@@ -362,6 +369,7 @@ def normalize_source_ingredient(
     candidate = OPTIONAL_PREFIX_RE.sub("", candidate)
     candidate = LEADING_NOISE_RE.sub("", candidate).strip()
     candidate = MALFORMED_SIZE_PREFIX_RE.sub("", candidate).strip()
+    candidate = re.sub(r"[\s~+:：.;,]+$", "", candidate).strip()
 
     if candidate.startswith("(") and candidate.endswith(")"):
         candidate = candidate[1:-1].strip()
@@ -400,7 +408,13 @@ def normalize_source_ingredient(
         if trailing_match:
             candidate = trailing_match.group("name").strip()
             amount = _merge_amounts(trailing_match.group("amount"), amount)
+        else:
+            half_match = TRAILING_HALF_AMOUNT_RE.match(candidate)
+            if half_match:
+                candidate = half_match.group("name").strip()
+                amount = _merge_amounts(half_match.group("amount"), amount)
 
+    candidate = re.sub(r"[\s~+:：.;,]+$", "", candidate).strip()
     return candidate, amount, optional
 
 
