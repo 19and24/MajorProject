@@ -45,8 +45,10 @@ NEW_CANON_REDIRECT = {
 EXTRA_ALIASES = {"건고추": ["건청양고추"], "돈가스": ["카츠"]}
 # Best-guess category for brand-new canonicals; the curator can correct these.
 CATEGORY_GUESS = [
+    (r"머리고기|족발|삼겹|목살|설도|^소고기|^돼지고기", "육류"),
     (r"치즈", "달걀/유제품"),
-    (r"쯔유|소스|육수|젓|장$|청$|카레|하이라이스|마요", "조미료/양념"),
+    (r"육수$|육수분말|스톡", "물/육수"),
+    (r"쯔유|소스|시즈닝|젓|장$|청$|카레|하이라이스|마요", "조미료/양념"),
     (r"김치", "김치/절임류"),
     (r"오징어|골뱅이|새우|게$|조개|굴$", "해산물류"),
     (r"복숭아|오미자|크린베리|크랜베리|참외", "과일류"),
@@ -130,16 +132,24 @@ def main() -> int:
     args = parser.parse_args()
 
     fieldnames, rows = load_rows()
+    new_canon, improvements = parse_manual(MANUAL_PATH.read_text(encoding="utf-8"))
 
-    # Drop rows a previous run of this script created, so re-running rebuilds
-    # them from scratch (idempotent). Alias-augmented rows are left alone;
-    # already-present aliases are skipped by ``attach`` below.
-    rows = [row for row in rows if not row["notes"].startswith(NEW_ROW_NOTE)]
+    # Drop rows an earlier run of this script created *for a canonical the
+    # worklist still declares*, so re-running rebuilds them cleanly. Rows from
+    # past worklists that have since been cleared out are left in place — the
+    # merge is not the source of truth for them any more.
+    declared_new = {name for name, _ in new_canon}
+    rows = [
+        row
+        for row in rows
+        if not (
+            row["notes"].startswith(NEW_ROW_NOTE)
+            and row["canonical_name"] in declared_new
+        )
+    ]
 
     by_canonical = {row["canonical_name"]: row for row in rows}
     index = build_index(rows)
-
-    new_canon, improvements = parse_manual(MANUAL_PATH.read_text(encoding="utf-8"))
 
     added: dict[str, list[str]] = {}   # canonical -> newly attached raw names
     created: list[str] = []

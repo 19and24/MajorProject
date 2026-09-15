@@ -63,13 +63,16 @@ TRAILING_PREPARATION_RE = re.compile(
 )
 FALLBACK_PREFIX_RE = re.compile(
     r"^(?:가공|가는|갈은|갈아낸|갈아준|깐|깍은|볶은|삶은|데친|냉동|불린|"
-    r"찐|구운|손질한|손질|채썬|썬|다진|건조|고운|굵은|국산|겨울|압축|자연산|"
+    r"찐|구운|손질한|손질된|손질|채썬|썬|썰은|썰어준|다진|건조|고운|굵은|국산|겨울|압축|자연산|"
     r"각종|미니|꼬마|작은|생|가염|무가당|저지방|유기농|간수뺀|강한|"
-    r"베이비|햇|말린|으깬|녹인|데운|따뜻한|차가운|어슷썬|잘게|곱게|"
-    r"얇게|두껍게|슬라이스한|슬라이스|채친|채\s*썬|토핑용|세척용|튀김용|구이용|"
+    r"만능|자른|통밀|한우|신선한|자투리|저칼로리|조미|중간|중국|한입쏙|"
+    r"베이비|햇|말린|으깬|녹인|데운|따뜻한|차가운|어슷썬|잘게|잘개|곱게|"
+    r"얇게|얅게|저민|두껍게|슬라이스한|슬라이스|채친|채\s*썬|토핑용|세척용|튀김용|구이용|"
     r"국물용|육수용|김밥용|샐러드용|고명용|기호에\s*따라|취향에\s*따라|취향껏|시판용|시판|"
-    r"간|crushed|저당|안매운|순한|무설탕|무가염|하프|송송\s*썬|송송|다듬은|빻은|"
-    r"밑간용[-:\s]*|밑간[-:\s]*|볶음용|조림용|국용|찌개용|구울\s*때[-:\s]*|볶을\s*때[-:\s]*|절일\s*때[-:\s]*)"
+    r"간|crushed|저당|안\s*매운|순한|무설탕|무가염|하프|송송\s*썬|송송|다듬은|빻은|"
+    r"크게|작게|부순|씨를\s*빼고|해감\s*한|"
+    r"밑간용[-:\s]*|밑간[-:\s]*|볶음용|조림용|국용|찌개용|"
+    r"구울\s*때[-:\s]*|볶을\s*때[-:\s]*|절일\s*때[-:\s]*|해감할\s*때[-:\s]*)"
     r"\s*(?P<name>.+)$",
     re.IGNORECASE,
 )
@@ -77,7 +80,7 @@ FALLBACK_SPACED_PREFIX_RE = re.compile(
     r"^(?:건|거피)\s+(?P<name>.+)$"
 )
 FALLBACK_SUFFIX_RE = re.compile(
-    r"^(?P<name>.+?)(?:\s*(?:가루|채|슬라이스|큐브|필렛|필레|분태|살|"
+    r"^(?P<name>.+?)(?:\s*(?:가루|채썬것|채|슬라이스|큐브|필렛|필레|분태|살|"
     r"통조림|캔|겉잎|속대|잎|줄기|뿌리|껍질|초록부분|흰부분|송송|볶음용|조림용|찌개용|구이용|카레용|수육용|샤브용)|\s+한)$"
 )
 FALLBACK_PARENTHETICAL_RE = re.compile(r"^(?P<name>.+?)\s*\([^()]+\)$")
@@ -87,7 +90,8 @@ FALLBACK_TRAILING_NOISE_RE = re.compile(
     r"^(?P<name>.+?)\s+(?:약|약간|조금|적당량|넉넉히|듬뿍|담뿍|"
     r"국그릇\s*기준|한|두|세|반|깎아서|깍아서|평평하게|수북하게|수북이|취향껏|취향에\s*따라|기호껏|소량)$"
 )
-COMPOUND_DELIMITER_RE = re.compile(r"\s*(?:\+|&|·|,|，|/)\s*")
+COMPOUND_DELIMITER_RE = re.compile(r"\s*(?:\+|&|·|,|，|/|\.)\s*")
+TRAILING_GENERIC_WORDS_RE = re.compile(r"(?:\s+(?:약간|조금|밑간용|밑간))+$")
 ALTERNATIVE_RE = re.compile(
     r"(?:\s*(?:또는|혹은|내지는)\s*|\s+or\s+|\s+(?:이나|나)\s+)", re.IGNORECASE
 )
@@ -320,14 +324,21 @@ class IngredientMapper:
                     return delimited
 
         spaced = candidate.split()
-        if not 2 <= len(spaced) <= 4:
-            return None
-        resolved = [self._resolve_candidate(part) for part in spaced]
-        if any(entry is None for entry in resolved):
-            return None
-        if not all(entry.name in SPLITTABLE_CANONICAL_NAMES for entry in resolved):
-            return None
-        return spaced
+        if 2 <= len(spaced) <= 4:
+            resolved = [self._resolve_candidate(part) for part in spaced]
+            if all(entry is not None for entry in resolved) and all(
+                entry.name in SPLITTABLE_CANONICAL_NAMES for entry in resolved
+            ):
+                return spaced
+
+        # 붙어 있는 두 단일 표준재료(예: "소금후추") 분리. SPLITTABLE_CANONICAL_NAMES로
+        # 범위를 좁혀 임의의 접두/접미 일치로 잘못 쪼개는 일을 막는다.
+        for name in sorted(SPLITTABLE_CANONICAL_NAMES, key=len, reverse=True):
+            if candidate.startswith(name) and len(candidate) > len(name):
+                remainder = candidate[len(name):]
+                if remainder in SPLITTABLE_CANONICAL_NAMES:
+                    return [name, remainder]
+        return None
 
 
 def fallback_ingredient_names(candidate: str) -> list[str]:
@@ -414,6 +425,7 @@ def normalize_source_ingredient(
                 candidate = half_match.group("name").strip()
                 amount = _merge_amounts(half_match.group("amount"), amount)
 
+    candidate = TRAILING_GENERIC_WORDS_RE.sub("", candidate).strip()
     candidate = re.sub(r"[\s~+:：.;,]+$", "", candidate).strip()
     return candidate, amount, optional
 
