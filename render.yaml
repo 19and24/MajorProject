@@ -12,7 +12,7 @@ services:
 
     startCommand: >-
       python -m alembic upgrade head &&
-      python scripts/import_recipes.py &&
+      python scripts/import_recipes.py --force &&
       python -m uvicorn app.main:app
       --host 0.0.0.0
       --port $PORT
@@ -22,11 +22,15 @@ services:
     autoDeployTrigger: checksPass
 
     envVars:
-      - key: 
-          DATABASE_HOST=gateway01.ap-northeast-1.prod.aws.tidbcloud.com
-          DATABASE_PORT=4000
-          DATABASE_NAME=fridge_db
-          DATABASE_USER=abc123.root
-          DATABASE_PASSWORD=실제 비밀번호
-          DATABASE_SSL_CA=/etc/ssl/certs/ca-certificates.crt
+      - key: DATABASE_HOST
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
+      - key: DATABASE_PORT
+        value: "4000"
+      - key: DATABASE_NAME
+        value: fridge_db
+      - key: DATABASE_USER
+        value: abc123.root
+      - key: DATABASE_PASSWORD
         sync: false
+      - key: DATABASE_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
