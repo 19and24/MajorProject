@@ -418,7 +418,7 @@ def main() -> None:
                         optional=resolved.optional,
                     ))
             db.add_all(link_rows)
-            db.flush()
+            db.commit()  # keep each batch's transaction short-lived (TiDB drops long ones)
             total_recipes += len(recipe_batch)
             total_links += len(link_rows)
             recipe_batch = []
