@@ -30,7 +30,11 @@ jobs:
         working-directory: backend
 
     env:
-      DATABASE_URL: sqlite:///./ci.db
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 3306
+      DATABASE_NAME: ci_test
+      DATABASE_USER: ci_user
+      DATABASE_PASSWORD: ci_password
 
     steps:
       - name: Checkout repository
