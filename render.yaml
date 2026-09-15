@@ -29,7 +29,7 @@ services:
       - key: DATABASE_NAME
         value: fridge_db
       - key: DATABASE_USER
-        value: abc123.root
+        sync: false
       - key: DATABASE_PASSWORD
         sync: false
       - key: DATABASE_SSL_CA
