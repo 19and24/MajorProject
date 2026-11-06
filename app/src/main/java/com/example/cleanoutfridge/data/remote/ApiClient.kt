@@ -7,6 +7,7 @@ import com.example.cleanoutfridge.data.remote.api.IngredientApi
 import com.example.cleanoutfridge.data.remote.api.NotificationApi
 import com.example.cleanoutfridge.data.remote.api.RecipeApi
 import com.example.cleanoutfridge.data.remote.api.RecommendationApi
+import com.example.cleanoutfridge.data.remote.api.VisionApi
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -50,10 +51,21 @@ object ApiClient {
         .addInterceptor(loggingInterceptor)
         .build()
 
+    /** AI photo analysis can take longer than a normal CRUD call, so it gets its own timeouts. */
+    private val visionOkHttpClient: OkHttpClient = okHttpClient.newBuilder()
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(45, TimeUnit.SECONDS)
+        .writeTimeout(45, TimeUnit.SECONDS)
+        .build()
+
     private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+
+    private val visionRetrofit: Retrofit = retrofit.newBuilder()
+        .client(visionOkHttpClient)
         .build()
 
     val ingredientApi: IngredientApi by lazy { retrofit.create(IngredientApi::class.java) }
@@ -62,4 +74,5 @@ object ApiClient {
     val recipeApi: RecipeApi by lazy { retrofit.create(RecipeApi::class.java) }
     val recommendationApi: RecommendationApi by lazy { retrofit.create(RecommendationApi::class.java) }
     val dashboardApi: DashboardApi by lazy { retrofit.create(DashboardApi::class.java) }
+    val visionApi: VisionApi by lazy { visionRetrofit.create(VisionApi::class.java) }
 }

@@ -1,5 +1,9 @@
 package com.example.cleanoutfridge.ui.screens
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,9 +32,9 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.Button
@@ -48,6 +52,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +60,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +69,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.cleanoutfridge.model.AI_SCAN_SCENARIOS
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import com.example.cleanoutfridge.BuildConfig
+import com.example.cleanoutfridge.data.remote.ApiException
+import com.example.cleanoutfridge.data.remote.NetworkUnavailableException
+import com.example.cleanoutfridge.data.remote.dto.VisionScanItemDto
+import com.example.cleanoutfridge.data.repository.VisionRepository
 import com.example.cleanoutfridge.model.CATEGORIES
 import com.example.cleanoutfridge.model.FoodItem
 import com.example.cleanoutfridge.model.addDays
@@ -73,9 +87,12 @@ import com.example.cleanoutfridge.model.today
 import com.example.cleanoutfridge.ui.theme.AppFonts
 import com.example.cleanoutfridge.ui.theme.FoodColors
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.UUID
 
-private enum class ScanPhase { IDLE, VIEWFINDER, ANALYZING, RESULTS }
+private enum class ScanPhase { IDLE, ANALYZING, RESULTS }
 
 private data class DetectedItem(
     val id: String,
@@ -88,7 +105,46 @@ private data class DetectedItem(
     val editOpen: Boolean,
 )
 
-private val analysisMessages = listOf("사진 분석 중...", "식재료 감지 중...", "유통기한 계산 중...", "완료 ✓")
+private fun VisionScanItemDto.toDetectedItem(index: Int): DetectedItem {
+    val cat = categoryById(category)
+    return DetectedItem(
+        id = "det-$index",
+        name = name,
+        category = if (cat != null) category else "기타",
+        emoji = emoji.ifBlank { cat?.emoji ?: "🍱" },
+        confidence = confidence,
+        expiryDate = addDays(expiryDays),
+        selected = true,
+        editOpen = false,
+    )
+}
+
+/** Compresses the bitmap at [uri] to a JPEG byte array sized for upload (longest side capped at 1600px). */
+private fun readImageBytes(context: Context, uri: Uri): ByteArray {
+    val input = context.contentResolver.openInputStream(uri)
+        ?: throw IllegalStateException("이미지를 열 수 없어요.")
+    val original = input.use { BitmapFactory.decodeStream(it) }
+        ?: throw IllegalStateException("이미지를 읽을 수 없어요.")
+
+    val maxSide = 1600
+    val scale = maxSide.toFloat() / maxOf(original.width, original.height)
+    val bitmap = if (scale < 1f) {
+        Bitmap.createScaledBitmap(original, (original.width * scale).toInt(), (original.height * scale).toInt(), true)
+    } else {
+        original
+    }
+
+    return ByteArrayOutputStream().use { out ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
+        out.toByteArray()
+    }
+}
+
+private fun createCameraOutputUri(context: Context): Uri {
+    val dir = File(context.cacheDir, "images").apply { mkdirs() }
+    val file = File(dir, "scan-${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
+}
 
 @Composable
 fun AddScreen(
@@ -97,49 +153,64 @@ fun AddScreen(
     onFullScreenChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val visionRepository = remember { VisionRepository() }
+
     var phase by remember { mutableStateOf(ScanPhase.IDLE) }
-    var analysisStep by remember { mutableStateOf(0) }
     val detected = remember { mutableStateListOf<DetectedItem>() }
     var bulkSuccess by remember { mutableStateOf(false) }
-    var sceneLabel by remember { mutableStateOf("") }
+    var scanError by remember { mutableStateOf<String?>(null) }
     var manualSuccess by remember { mutableStateOf(false) }
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var showSourcePicker by remember { mutableStateOf(false) }
 
     var formName by remember { mutableStateOf("") }
     var formCategory by remember { mutableStateOf("유제품") }
     var formEmoji by remember { mutableStateOf("🥛") }
     var formExpiry by remember { mutableStateOf(addDays(7)) }
 
-    LaunchedEffect(phase) { onFullScreenChange(phase != ScanPhase.IDLE) }
-
-    LaunchedEffect(phase) {
-        if (phase == ScanPhase.ANALYZING) {
-            analysisStep = 0
-            repeat(analysisMessages.size - 1) {
-                delay(650)
-                analysisStep++
+    fun runScan(uri: Uri) {
+        phase = ScanPhase.ANALYZING
+        scanError = null
+        scope.launch {
+            try {
+                val bytes = readImageBytes(context, uri)
+                val items = visionRepository.scanPhoto(bytes)
+                detected.clear()
+                detected.addAll(items.mapIndexed { i, dto -> dto.toDetectedItem(i) })
+                if (detected.isEmpty()) {
+                    scanError = "사진에서 식재료를 찾지 못했어요. 다시 찍어보시겠어요?"
+                    phase = ScanPhase.IDLE
+                } else {
+                    phase = ScanPhase.RESULTS
+                }
+            } catch (e: Exception) {
+                scanError = e.toScanErrorMessage()
+                phase = ScanPhase.IDLE
             }
-            delay(400)
-            val scenario = AI_SCAN_SCENARIOS.random()
-            sceneLabel = scenario.scene
-            detected.clear()
-            detected.addAll(
-                scenario.items.mapIndexed { i, scenarioItem ->
-                    val cat = categoryById(scenarioItem.category)
-                    DetectedItem(
-                        id = "det-$i",
-                        name = scenarioItem.name,
-                        category = scenarioItem.category,
-                        emoji = scenarioItem.emoji,
-                        confidence = scenarioItem.confidence,
-                        expiryDate = addDays(cat?.defaultDays ?: 7),
-                        selected = true,
-                        editOpen = false,
-                    )
-                },
-            )
-            phase = ScanPhase.RESULTS
         }
     }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri -> if (uri != null) runScan(uri) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+    ) { success -> pendingCameraUri?.let { if (success) runScan(it) } }
+
+    fun launchCamera() {
+        val uri = createCameraOutputUri(context)
+        pendingCameraUri = uri
+        cameraLauncher.launch(uri)
+    }
+
+    fun launchGallery() {
+        galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+
+    LaunchedEffect(phase) { onFullScreenChange(phase != ScanPhase.IDLE) }
 
     LaunchedEffect(bulkSuccess) {
         if (bulkSuccess) {
@@ -165,14 +236,9 @@ fun AddScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         when (phase) {
-            ScanPhase.VIEWFINDER -> ViewfinderPhase(
-                onClose = { phase = ScanPhase.IDLE },
-                onShutter = { phase = ScanPhase.ANALYZING },
-            )
-            ScanPhase.ANALYZING -> AnalyzingPhase(step = analysisStep, messages = analysisMessages)
+            ScanPhase.ANALYZING -> AnalyzingPhase()
             ScanPhase.RESULTS -> ResultsPhase(
                 detected = detected,
-                sceneLabel = sceneLabel,
                 bulkSuccess = bulkSuccess,
                 onClose = { phase = ScanPhase.IDLE; detected.clear() },
                 onToggleSelectAll = {
@@ -223,7 +289,7 @@ fun AddScreen(
                         ),
                     )
                 },
-                onRescan = { phase = ScanPhase.VIEWFINDER; detected.clear() },
+                onRescan = { detected.clear(); phase = ScanPhase.IDLE; showSourcePicker = true },
                 onConfirmAll = {
                     detected.filter { it.selected && it.name.isNotBlank() }.forEach {
                         onAdd(
@@ -235,6 +301,7 @@ fun AddScreen(
                                 expiryDate = it.expiryDate,
                                 emoji = it.emoji,
                                 addedDate = today(),
+                                unit = "개",
                             ),
                         )
                     }
@@ -266,126 +333,94 @@ fun AddScreen(
                                 expiryDate = formExpiry,
                                 emoji = formEmoji,
                                 addedDate = today(),
+                                unit = "개",
                             ),
                         )
                         manualSuccess = true
                     }
                 },
-                onCameraClick = { phase = ScanPhase.VIEWFINDER },
+                onCameraClick = { showSourcePicker = true },
+                scanError = scanError,
+                onDismissScanError = { scanError = null },
+            )
+        }
+
+        if (showSourcePicker) {
+            PhotoSourceSheet(
+                onDismiss = { showSourcePicker = false },
+                onTakePhoto = { showSourcePicker = false; launchCamera() },
+                onPickFromGallery = { showSourcePicker = false; launchGallery() },
             )
         }
     }
 }
 
 @Composable
-private fun ViewfinderPhase(onClose: () -> Unit, onShutter: () -> Unit) {
-    Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+private fun PhotoSourceSheet(onDismiss: () -> Unit, onTakePhoto: () -> Unit, onPickFromGallery: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable(onClick = onDismiss),
+    ) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .background(FoodColors.card)
+                .clickable(enabled = false) {}
+                .padding(20.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                "사진으로 식재료 인식",
+                fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 18.sp, color = FoodColors.foreground,
+            )
+            Text(
+                "한 장에 여러 식재료가 보이면 모두 인식해서 유통기한까지 채워드려요",
+                fontFamily = AppFonts.dmSans, fontSize = 12.sp, color = FoodColors.mutedForeground,
+            )
+            Spacer(Modifier.height(4.dp))
+            PhotoSourceOption(
+                icon = Icons.Filled.PhotoCamera,
+                label = "사진 찍기",
+                onClick = onTakePhoto,
+            )
+            PhotoSourceOption(
+                icon = Icons.Filled.Image,
+                label = "갤러리에서 선택",
+                onClick = onPickFromGallery,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PhotoSourceOption(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(FoodColors.muted)
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color(0xFF15200F), Color(0xFF0D140A), Color(0xFF120E08)))),
+            modifier = Modifier.size(40.dp).clip(CircleShape).background(FoodColors.primary),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(width = 260.dp, height = 180.dp)
-                    .border(2.dp, Color(0xFFA8D48A), RoundedCornerShape(4.dp)),
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .padding(horizontal = 20.dp, vertical = 40.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.12f))
-                        .clickable { onClose() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Filled.Close, contentDescription = "닫기", tint = Color.White)
-                }
-                Row(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(FoodColors.urgent))
-                    Text("AI 인식", fontFamily = AppFonts.mono, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
-                }
-                Spacer(Modifier.size(44.dp))
-            }
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 180.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    "식재료가 모두 보이도록 찍어주세요",
-                    fontFamily = AppFonts.fraunces, fontWeight = FontWeight(700), fontSize = 17.sp,
-                    color = Color.White, textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "냉장고 안 · 장바구니 · 식탁 위 모두 OK",
-                    fontFamily = AppFonts.inter, fontSize = 12.sp,
-                    color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.Center,
-                )
-            }
+            Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
         }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-                .background(Color.Black.copy(alpha = 0.92f))
-                .padding(horizontal = 40.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White.copy(alpha = 0.08f))
-                    .border(2.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("🖼️", fontSize = 22.sp)
-            }
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .border(4.dp, Color.White, CircleShape)
-                    .clickable { onShutter() }
-                    .padding(6.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(Modifier.fillMaxSize().clip(CircleShape).background(Color.White))
-            }
-            Box(
-                modifier = Modifier.size(54.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Filled.Refresh, contentDescription = "전환", tint = Color.White.copy(alpha = 0.7f))
-            }
-        }
+        Text(label, fontFamily = AppFonts.nunito, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = FoodColors.foreground)
     }
 }
 
 @Composable
-private fun AnalyzingPhase(step: Int, messages: List<String>) {
+private fun AnalyzingPhase() {
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0E1309)), contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier.padding(horizontal = 32.dp),
@@ -409,55 +444,10 @@ private fun AnalyzingPhase(step: Int, messages: List<String>) {
                 Text("AI 분석 중", fontFamily = AppFonts.fraunces, fontWeight = FontWeight(900), fontSize = 24.sp, color = Color.White)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    messages[step.coerceIn(0, messages.lastIndex)],
+                    "사진 속 식재료와 유통기한을 찾고 있어요...",
                     fontFamily = AppFonts.mono, fontSize = 14.sp, color = Color(0xFFA8D48A),
+                    textAlign = TextAlign.Center,
                 )
-            }
-
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(Color.White.copy(alpha = 0.1f)),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(((step + 1f) / messages.size).coerceIn(0f, 1f))
-                            .height(6.dp)
-                            .background(FoodColors.primary),
-                    )
-                }
-                Spacer(Modifier.height(20.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    messages.forEachIndexed { i, msg ->
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Box(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        when {
-                                            i < step -> FoodColors.primary
-                                            i == step -> FoodColors.primary.copy(alpha = 0.3f)
-                                            else -> Color.White.copy(alpha = 0.07f)
-                                        },
-                                    ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                when {
-                                    i < step -> Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                                    i == step -> Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFA8D48A)))
-                                }
-                            }
-                            Text(
-                                msg, fontFamily = AppFonts.inter, fontSize = 14.sp,
-                                color = if (i <= step) Color.White.copy(alpha = 0.9f) else Color.White.copy(alpha = 0.25f),
-                            )
-                        }
-                    }
-                }
             }
         }
     }
@@ -466,7 +456,6 @@ private fun AnalyzingPhase(step: Int, messages: List<String>) {
 @Composable
 private fun ResultsPhase(
     detected: List<DetectedItem>,
-    sceneLabel: String,
     bulkSuccess: Boolean,
     onClose: () -> Unit,
     onToggleSelectAll: () -> Unit,
@@ -494,7 +483,7 @@ private fun ResultsPhase(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text("${detected.size}개 식재료 인식됨", fontFamily = AppFonts.nunito, fontWeight = FontWeight.Black, fontSize = 20.sp, color = FoodColors.foreground)
-                    Text(sceneLabel, fontFamily = AppFonts.dmMono, fontSize = 12.sp, color = FoodColors.mutedForeground)
+                    Text("AI가 자동으로 분석했어요", fontFamily = AppFonts.dmMono, fontSize = 12.sp, color = FoodColors.mutedForeground)
                 }
                 IconButton(onClick = onClose, modifier = Modifier.size(36.dp).clip(CircleShape).background(FoodColors.muted)) {
                     Icon(Icons.Filled.Close, contentDescription = "닫기", tint = FoodColors.mutedForeground, modifier = Modifier.size(16.dp))
@@ -740,8 +729,29 @@ private fun IdlePhase(
     manualSuccess: Boolean,
     onSubmit: () -> Unit,
     onCameraClick: () -> Unit,
+    scanError: String?,
+    onDismissScanError: () -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
+        if (scanError != null) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 16.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(FoodColors.urgentSoft)
+                        .clickable { onDismissScanError() }
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(Icons.Filled.Close, contentDescription = null, tint = FoodColors.urgent, modifier = Modifier.size(16.dp))
+                    Text(scanError, fontFamily = AppFonts.dmSans, fontSize = 12.sp, color = FoodColors.urgent, modifier = Modifier.weight(1f))
+                }
+            }
+        }
         item {
             Column(
                 modifier = Modifier
@@ -910,4 +920,11 @@ private fun DateField(value: String, onValueChange: (String) -> Unit, modifier: 
         ),
         modifier = modifier.fillMaxWidth(),
     )
+}
+
+private fun Exception.toScanErrorMessage(): String = when (this) {
+    is NetworkUnavailableException -> message ?: "네트워크 연결을 확인해주세요."
+    is ApiException -> message
+    is IllegalStateException -> message ?: "사진을 처리할 수 없어요."
+    else -> "사진 분석 중 문제가 발생했어요. 다시 시도해주세요."
 }

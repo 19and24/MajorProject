@@ -1,4 +1,4 @@
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import asc, case, desc, func, select
 from sqlalchemy.orm import Session
 
 from app.models.ingredient import Ingredient
@@ -32,7 +32,11 @@ def get_many(
         query = query.where(Ingredient.category == category)
 
     direction = desc if descending else asc
-    query = query.order_by(direction(SORT_COLUMNS[sort_field]), Ingredient.id.asc())
+    order_columns = [direction(SORT_COLUMNS[sort_field]), Ingredient.id.asc()]
+    if keyword:
+        # Exact name matches should outrank partial matches regardless of the requested sort.
+        order_columns.insert(0, case((Ingredient.name == keyword, 0), else_=1))
+    query = query.order_by(*order_columns)
     total = db.scalar(select(func.count()).select_from(query.order_by(None).subquery())) or 0
     items = list(db.scalars(query.offset((page - 1) * size).limit(size)).all())
     return items, total

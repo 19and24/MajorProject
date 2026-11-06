@@ -8,6 +8,7 @@ from app.routers.ingredients import router as ingredients_router
 from app.routers.notifications import router as notifications_router
 from app.routers.recipes import router as recipes_router
 from app.routers.recommendations import router as recommendations_router
+from app.routers.vision import router as vision_router
 
 app = FastAPI(title="Naengbu API")
 app.include_router(ingredients_router, prefix="/api/v1")
@@ -16,6 +17,7 @@ app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(recipes_router, prefix="/api/v1")
 app.include_router(recommendations_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
+app.include_router(vision_router, prefix="/api/v1")
 
 
 @app.exception_handler(HTTPException)

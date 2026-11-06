@@ -1,0 +1,211 @@
+INFO         | Android emulator version 36.2.12.0 (build_id 14214601) (CL:N/A)
+INFO         | Graphics backend: gfxstream
+INFO         | Found systemPath C:\Users\afghr\AppData\Local\Android\Sdk\system-images\android-36.1\google_apis_playstore\x86_64\
+WARNING      | Please update the emulator to one that supports the feature(s): VulkanVirtualQueue
+INFO         | IPv4 server found: 192.168.219.1
+INFO         | Ignore IPv6 address: 28aa:ac5a:3402:0:40a2:ac5a:3402:0
+INFO         | Ignore IPv6 address: 28aa:ac5a:3402:0:40a2:ac5a:3402:0
+INFO         | Ignore IPv6 address: 28aa:ac5a:3402:0:40a2:ac5a:3402:0
+INFO         | Guest GLES Driver: Auto (ext controls)
+library_mode host gpu mode host
+INFO         | emuglConfig_get_vulkan_hardware_gpu_support_info: Found physical GPU 'NVIDIA GeForce RTX 4060 Ti', type: VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, apiVersion: 1.4.341, driverVersion: 610.74
+
+INFO         | GPU device local memory = 7949MB
+INFO         | Checking system compatibility:
+INFO         |   Checking: hasCompatibleHypervisor
+INFO         |      Ok: Hypervisor compatibility to run avd: `Medium_Phone_API_36.1` are met
+INFO         |   Checking: hasSufficientSystem
+INFO         |      Ok: System requirements to run avd: `Medium_Phone_API_36.1` are met
+INFO         |   Checking: hasSufficientHwGpu
+INFO         |      Ok: Hardware GPU requirements to run avd: `Medium_Phone_API_36.1` are passed
+INFO         |   Checking: hasSufficientDiskSpace
+INFO         |      Ok: Disk space requirements to run avd: `Medium_Phone_API_36.1` are met
+INFO         | Critical: Failed to load opengl32sw (지정된 모듈을 찾을 수 없습니다.) (:0, )
+INFO         | Warning: Software OpenGL failed. Falling back to system OpenGL. (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_btn_xr_environment_living_room_day_clicked() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_btn_xr_environment_living_room_night_clicked() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_new_posture_requested(int) (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_dismiss_posture_selection_dialog() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_new_resizable_requested(PresetEmulatorSizeType) (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_dismiss_resizable_dialog() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_xr_environment_mode_changed(int) (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_dismiss_xr_environment_mode_dialog() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_xr_input_mode_changed(int) (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_dismiss_xr_input_mode_dialog() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_sleep_timer_done() (:0, )
+INFO         | Warning: QMetaObject::connectSlotsByName: No matching signal for on_unfold_timer_done() (:0, )
+INFO         | Storing crashdata in: C:\Users\afghr\AppData\Local\Temp\\AndroidEmulator\emu-crash-36.2.12.db, detection is enabled for process: 29700
+INFO         | Initializing hardware OpenGLES emulation support
+INFO         | android_startOpenglesRenderer: gpu info
+INFO         | GPU #1
+  Make: 10de
+  Model: NVIDIA GeForce RTX 4060 Ti
+  Device ID: 2803
+
+INFO         | HealthMonitor disabled.
+INFO         | SharedLibrary::open for [vulkan-1.dll]
+INFO         | SharedLibrary::open for [vulkan-1.dll]: not found in map, open for the first time
+INFO         | SharedLibrary::open for [vulkan-1.dll] (win32): call LoadLibrary
+INFO         | SharedLibrary::open succeeded for [vulkan-1.dll]. File name: [C:\WINDOWS\SYSTEM32\vulkan-1.dll]
+INFO         | Added library: vulkan-1.dll
+INFO         | Selecting Vulkan device: NVIDIA GeForce RTX 4060 Ti, Version: 1.4.341
+INFO         | Disabling sparse binding feature support
+INFO         | SharedLibrary::open for [opengl32.dll]: not found in map, open for the first time
+INFO         | SharedLibrary::open for [opengl32.dll] (win32): call LoadLibrary
+INFO         | SharedLibrary::open succeeded for [opengl32.dll]. File name: [C:\WINDOWS\SYSTEM32\opengl32.DLL]
+INFO         | SharedLibrary::open for [libshadertranslator.dll]: not found in map, open for the first time
+INFO         | SharedLibrary::open for [libshadertranslator.dll] (win32): call LoadLibrary
+INFO         | SharedLibrary::open succeeded for [libshadertranslator.dll]. File name: [C:\Users\afghr\AppData\Local\Android\Sdk\emulator\lib64\libshadertranslator.dll]
+INFO         | Initializing VkEmulation features:
+INFO         |     glInteropSupported: true
+INFO         |     useDeferredCommands: true
+INFO         |     createResourceWithRequirements: true
+INFO         |     useVulkanComposition: false
+INFO         |     useVulkanNativeSwapchain: false
+INFO         |     enable guestRenderDoc: false
+INFO         |     ASTC LDR emulation mode: Gpu
+INFO         |     enable ETC2 emulation: true
+INFO         |     enable Ycbcr emulation: false
+INFO         |     guestVulkanOnly: false
+INFO         |     useDedicatedAllocations: false
+INFO         | Graphics Adapter Vendor Google (NVIDIA Corporation)
+INFO         | Graphics Adapter Android Emulator OpenGL ES Translator (NVIDIA GeForce RTX 4060 Ti/PCIe/SSE2)
+INFO         | Graphics API Version OpenGL ES 3.0 (4.5.0 NVIDIA 610.74)
+INFO         | Graphics API Extensions GL_OES_EGL_sync GL_OES_EGL_image GL_OES_EGL_image_external GL_OES_depth24 GL_OES_depth32 GL_OES_element_index_uint GL_OES_texture_float GL_OES_texture_float_linear GL_OES_compressed_paletted_texture GL_OES_compressed_ETC1_RGB8_texture GL_OES_depth_texture GL_OES_texture_half_float GL_OES_texture_half_float_linear GL_OES_packed_depth_stencil GL_OES_vertex_half_float GL_OES_texture_npot GL_OES_rgb8_rgba8 GL_OVR_multiview2 GL_EXT_multiview_texture_multisample GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_texture_format_BGRA8888 GL_APPLE_texture_format_BGRA8888 GL_EXT_texture_buffer 
+INFO         | Graphics Device Extensions N/A
+INFO         | Sending adb public key [QAAAAOOx12k15I5wA0/0agiLNbZFobrLn3QpzwdQLoe2UOKwoAqPguplZ5X5Yrnj/3eqLX4ZOcJpE74UnCuFZG8BMGccWzf/1f86P5IH13zmZk2mQCsIhtMT13LYRHwI6cN6YClhbS9EN3Xw89Dtryh+FV7o8BcNjQwtpul3NzzJ+/TI7Ih55qNAM4jLtmnU1ORKYluCnCTsnlPKLuICVIFJGcjiKjpYXVMcuvD5Fpn5CJdfY9b0OYuONWZ35+FrJaIX9fn13r/ISq1bFThcPgnYGjfXKZsCPVGY4h4Lfv9MZ6LypW7WIpSWO1RBfxL81SF2k6ldkuVr9wiq/HRttsJAxW4iYkmfrvw+w1GBnV7augdgJJpir3aAG/rSc2nhBpecsH9Diae+/01JlWY+zzn4Kq+EVTLz/4msyeSLPygoUekD0s/6fOJYehJhD/H4qLokB2bErmaTAwFi6AmyKSMhWshUpFT+6a+ZWeevWKW7H3leJu8SgqH4gtxdneXE5BoL9Xy25dHFDLGEMdQmmWLyRjy3irK3S7lRNW9Qbzu6TXWIjImsuNQRPh0/oGF+OoQ0U7aM7BAon1Y78B4IUgB2PkI+9MapnCNC9z979LwrZzhknsMUdid7GfgNDVevgVfMYsZ76fOV7XVg6g22P7DE/E53rbxn5I7v2/e2wnoTO4p69V2ehwEAAQA= @unknown]
+INFO         | Userspace boot properties:
+INFO         |   androidboot.boot_devices=pci0000:00/0000:00:03.0 pci0000:00/0000:00:06.0
+INFO         |   androidboot.dalvik.vm.heapsize=512m
+INFO         |   androidboot.debug.hwui.renderer=skiagl
+INFO         |   androidboot.hardware=ranchu
+INFO         |   androidboot.hardware.gltransport=pipe
+INFO         |   androidboot.hardware.vulkan=ranchu
+INFO         |   androidboot.logcat=*:V
+INFO         |   androidboot.opengles.version=196609
+INFO         |   androidboot.qemu=1
+INFO         |   androidboot.qemu.adb.pubkey=QAAAAOOx12k15I5wA0/0agiLNbZFobrLn3QpzwdQLoe2UOKwoAqPguplZ5X5Yrnj/3eqLX4ZOcJpE74UnCuFZG8BMGccWzf/1f86P5IH13zmZk2mQCsIhtMT13LYRHwI6cN6YClhbS9EN3Xw89Dtryh+FV7o8BcNjQwtpul3NzzJ+/TI7Ih55qNAM4jLtmnU1ORKYluCnCTsnlPKLuICVIFJGcjiKjpYXVMcuvD5Fpn5CJdfY9b0OYuONWZ35+FrJaIX9fn13r/ISq1bFThcPgnYGjfXKZsCPVGY4h4Lfv9MZ6LypW7WIpSWO1RBfxL81SF2k6ldkuVr9wiq/HRttsJAxW4iYkmfrvw+w1GBnV7augdgJJpir3aAG/rSc2nhBpecsH9Diae+/01JlWY+zzn4Kq+EVTLz/4msyeSLPygoUekD0s/6fOJYehJhD/H4qLokB2bErmaTAwFi6AmyKSMhWshUpFT+6a+ZWeevWKW7H3leJu8SgqH4gtxdneXE5BoL9Xy25dHFDLGEMdQmmWLyRjy3irK3S7lRNW9Qbzu6TXWIjImsuNQRPh0/oGF+OoQ0U7aM7BAon1Y78B4IUgB2PkI+9MapnCNC9z979LwrZzhknsMUdid7GfgNDVevgVfMYsZ76fOV7XVg6g22P7DE/E53rbxn5I7v2/e2wnoTO4p69V2ehwEAAQA= @unknown
+INFO         |   androidboot.qemu.avd_name=Medium_Phone_API_36.1
+INFO         |   androidboot.qemu.camera_hq_edge_processing=0
+INFO         |   androidboot.qemu.camera_protocol_ver=1
+INFO         |   androidboot.qemu.cpuvulkan.version=4202496
+INFO         |   androidboot.qemu.gltransport.drawFlushInterval=800
+INFO         |   androidboot.qemu.gltransport.name=pipe
+INFO         |   androidboot.qemu.hwcodec.avcdec=2
+INFO         |   androidboot.qemu.hwcodec.hevcdec=2
+INFO         |   androidboot.qemu.hwcodec.vpxdec=2
+INFO         |   androidboot.qemu.settings.system.screen_off_timeout=2147483647
+INFO         |   androidboot.qemu.virtiowifi=1
+INFO         |   androidboot.qemu.vsync=60
+INFO         |   androidboot.serialno=EMULATOR36X2X12X0
+INFO         |   androidboot.vbmeta.digest=985534687e7068fe518baf7329565a3d751ac7eefcd99a2439c5c663b465aa72
+INFO         |   androidboot.vbmeta.hash_alg=sha256
+INFO         |   androidboot.vbmeta.size=6784
+INFO         |   androidboot.veritymode=enforcing
+WHPX on Windows 10.0.26200 detected.
+Windows Hypervisor Platform accelerator is operational
+netsimd I 08-15 10:08:19.328 daemon\src\rust_main.rs:100 - netsim artifacts path: "C:\\Users\\afghr\\AppData\\Local\\Temp\\netsimd"
+netsimd I 08-15 10:08:19.328 daemon\src\rust_main.rs:103 - NetsimdArgs {
+    fd_startup_str: None,
+    no_cli_ui: true,
+    no_web_ui: true,
+    pcap: false,
+    disable_address_reuse: false,
+    hci_port: None,
+    connector_instance: None,
+    instance: None,
+    logtostderr: false,
+    dev: false,
+    forward_host_mdns: false,
+    vsock: None,
+    config: None,
+    host_dns: Some(
+        "192.168.219.1",
+    ),
+    http_proxy: None,
+    wifi_tap: None,
+    wifi: None,
+    test_beacons: false,
+    no_test_beacons: false,
+    no_shutdown: false,
+    verbose: false,
+    version: false,
+    debug: DebugArgs {
+        debug_no_traffic: false,
+        debug_no_network: false,
+        debug_no_wmedium: false,
+        debug_no_mdns_wmedium: false,
+        debug_no_guest_to_host_mdns: false,
+    },
+    rssi: None,
+}
+INFO         | Monitoring duration of emulator setup.
+WARNING      | The emulator now requires a signed jwt token for gRPC access! Use the -grpc flag if you really want an open unprotected grpc port
+INFO         | Using security allow list from: C:\Users\afghr\AppData\Local\Android\Sdk\emulator\lib\emulator_access.json
+WARNING      | *** Basic token auth should only be used by android-studio ***
+INFO         | The active JSON Web Key Sets can be found here: C:\Users\afghr\AppData\Local\Temp\avd\running\29700\jwks\f5a7718f-7b6e-4d36-bf58-ecb0e0163067\active.jwk
+INFO         | Scanning C:\Users\afghr\AppData\Local\Temp\avd\running\29700\jwks\f5a7718f-7b6e-4d36-bf58-ecb0e0163067 for jwk keys.
+INFO         | Started GRPC server at 127.0.0.1:8554, security: Local, auth: +token
+INFO         | Advertising in: C:\Users\afghr\AppData\Local\Temp\avd\running\pid_29700.ini
+INFO         | Setting display: 0 configuration to: 1080x2400, dpi: 420x420 
+INFO         | setDisplayActiveConfig 0
+INFO         | Checking system compatibility:
+INFO         |   Checking: hasCompatibleHypervisor
+INFO         |      Ok: Hypervisor compatibility to run avd: `Medium_Phone_API_36.1` are met
+INFO         |   Checking: hasSufficientSystem
+INFO         |      Ok: System requirements to run avd: `Medium_Phone_API_36.1` are met
+INFO         |   Checking: hasSufficientHwGpu
+INFO         |      Ok: Hardware GPU requirements to run avd: `Medium_Phone_API_36.1` are passed
+INFO         |   Checking: hasSufficientDiskSpace
+INFO         |      Ok: Disk space requirements to run avd: `Medium_Phone_API_36.1` are met
+USER_INFO    | Emulator is performing a full startup. This may take upto two minutes, or more.
+WARNING      | adb command 'C:\Users\afghr\AppData\Local\Android\Sdk\platform-tools\adb.exe -s emulator-5554 shell am start-foreground-service -e meter on com.android.emulator.radio.config/.MeterService ' failed: 'adb.exe: device offline'
+INFO         | Activated packet streamer for uwb emulation
+INFO         | Activated packet streamer for bluetooth emulation
+INFO         | Critical: UpdateLayeredWindowIndirect failed for ptDst=(148, 163), size=(300x21), dirty=(300x21 0, 0) (시스템에 부착된 장치가 작동하지 않습니다.) (:0, )
+INFO         | Critical: UpdateLayeredWindowIndirect failed for ptDst=(148, 163), size=(300x21), dirty=(300x21 0, 0) (시스템에 부착된 장치가 작동하지 않습니다.) (:0, )
+INFO         | Boot completed in 56997 ms
+INFO         | Increasing screen off timeout, logcat buffer size to 2M.
+INFO         | IPv4 server found: 192.168.219.1
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | IPv4 server found: 192.168.219.1
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | IPv4 server found: 192.168.219.1
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | Ignore IPv6 address: 5875:4744:3402:0:706d:4744:3402:0
+INFO         | Created VkInstance:00000234417AFA20 for application:'' engine:''.
+INFO         | Destroyed VkInstance:00000234417AFA20 for application:'' engine:''.
+INFO         | Created VkInstance:0000023445351D90 for application:'' engine:''.
+INFO         | Destroyed VkInstance:0000023445351D90 for application:'' engine:''.
+INFO         | Created VkInstance:0000023444D300A0 for application:'Chromium' engine:''.
+INFO         | Created VkDevice:000002342FB000D0 for application:'Chromium' instance:0000023444D300A0. ASTC emulation:on CPU decoding:off.
+INFO         | Destroyed VkDevice:000002342FB000D0
+INFO         | Destroyed VkInstance:0000023444D300A0 for application:'Chromium' engine:''.
+WARNING      | ClipboardPipe: the clipboard is too large (221450), ignoring.
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Warning: Retrying to obtain clipboard. (:0, )
+INFO         | Created VkInstance:0000023445378F00 for application:'' engine:''.
+INFO         | Destroyed VkInstance:0000023445378F00 for application:'' engine:''.
+INFO         | Created VkInstance:00000234459EEE10 for application:'Chromium' engine:''.
+INFO         | Created VkDevice:000002343EF800D0 for application:'Chromium' instance:00000234459EEE10. ASTC emulation:on CPU decoding:off.
+WARNING      | vkCreateImage: vkGetPhysicalDeviceImageFormatProperties failed with VK_ERROR_FORMAT_NOT_SUPPORTED
+INFO         | Destroyed VkDevice:000002343EF800D0
+INFO         | Destroyed VkInstance:00000234459EEE10 for application:'Chromium' engine:''.
+INFO         | Wait for emulator (pid 29700) 20 seconds to shutdown gracefully before kill;you can set environment variable ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL(in seconds) to change the default value (20 seconds)
+
+INFO         | Saving with gfxstream=1
+INFO         | Saving snapshot 'default_boot' using 966 ms
